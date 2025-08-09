@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Pets Adventure - Offline</title>
+    <meta name="description" content="Continue your adventure offline with AI Pets Adventure">
+    <meta name="theme-color" content="#16213e">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    
+    <!-- Styles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .offline-container {
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .offline-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .offline-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #64b5f6, #81c784);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .offline-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            color: #b0bec5;
+            line-height: 1.6;
+        }
+
+        .offline-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .feature-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #64b5f6;
+        }
+
+        .feature-description {
+            font-size: 0.9rem;
+            color: #b0bec5;
+            line-height: 1.5;
+        }
+
+        .offline-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #64b5f6, #81c784);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(100, 181, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .connection-status {
+            margin-top: 30px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status-text {
+            font-size: 0.9rem;
+            color: #b0bec5;
+        }
+
+        .retry-button {
+            background: none;
+            border: none;
+            color: #64b5f6;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+
+        .retry-button:hover {
+            color: #81c784;
+        }
+
+        .offline-tips {
+            margin-top: 30px;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tips-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #64b5f6;
+        }
+
+        .tips-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tips-list li {
+            padding: 8px 0;
+            color: #b0bec5;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tips-list li::before {
+            content: "💡";
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .offline-title {
+                font-size: 2rem;
+            }
+            
+            .offline-subtitle {
+                font-size: 1rem;
+            }
+            
+            .offline-features {
+                grid-template-columns: 1fr;
+            }
+            
+            .offline-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <!-- Offline Icon -->
+        <div class="offline-icon pulse">
+            📱
+        </div>
+
+        <!-- Main Content -->
+        <h1 class="offline-title">You're Offline!</h1>
+        <p class="offline-subtitle">
+            Don't worry! You can still enjoy AI Pets Adventure offline. 
+            Your progress will automatically sync when you're back online.
+        </p>
+
+        <!-- Offline Features -->
+        <div class="offline-features">
+            <div class="feature-card">
+                <span class="feature-icon">🎮</span>
+                <h3 class="feature-title">Continue Playing</h3>
+                <p class="feature-description">
+                    All your game progress is saved locally. Keep playing your quests and training your pets!
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">💾</span>
+                <h3 class="feature-title">Local Storage</h3>
+                <p class="feature-description">
+                    Your game data, pet memories, and preferences are safely stored on your device.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">🔄</span>
+                <h3 class="feature-title">Auto-Sync</h3>
+                <p class="feature-description">
+                    When you reconnect, all offline actions will automatically sync with the server.
+                </p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="offline-actions">
+            <button class="btn btn-primary" onclick="retryConnection()">
+                🔄 Retry Connection
+            </button>
+            <button class="btn btn-secondary" onclick="continueOffline()">
+                🎮 Continue Offline
+            </button>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="connection-status">
+            <span class="status-text">
+                Checking connection... 
+                <button class="retry-button" onclick="retryConnection()">Retry</button>
+            </span>
+        </div>
+
+        <!-- Offline Tips -->
+        <div class="offline-tips">
+            <h3 class="tips-title">💡 Offline Tips</h3>
+            <ul class="tips-list">
+                <li>Check your internet connection and try refreshing the page</li>
+                <li>Make sure you're not in airplane mode</li>
+                <li>Try switching between WiFi and mobile data</li>
+                <li>Your game progress is safe and will sync when online</li>
+                <li>You can still play most game features offline</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Check connection status
+        let connectionCheckInterval;
+
+        function checkConnection() {
+            if (navigator.onLine) {
+                // Try to fetch a small resource to verify actual connectivity
+                fetch('/api/health', { 
+                    method: 'HEAD',
+                    cache: 'no-cache'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    }
+                })
+                .catch(() => {
+                    // Still offline, continue checking
+                });
+            }
+        }
+
+        function retryConnection() {
+            const statusElement = document.querySelector('.status-text');
+            statusElement.innerHTML = 'Checking connection... <button class="retry-button" onclick="retryConnection()">Retry</button>';
+            
+            checkConnection();
+        }
+
+        function continueOffline() {
+            // Try to navigate to the main app
+            try {
+                // Check if we have cached content
+                if ('caches' in window) {
+                    caches.match('/')
+                        .then(response => {
+                            if (response) {
+                                window.location.href = '/';
+                            } else {
+                                showOfflineMessage();
+                            }
+                        })
+                        .catch(() => {
+                            showOfflineMessage();
+                        });
+                } else {
+                    showOfflineMessage();
+                }
+            } catch (error) {
+                showOfflineMessage();
+            }
+        }
+
+        function showOfflineMessage() {
+            const statusElement = document.querySelector('.status-text');
+            statusElement.innerHTML = 'No cached content available. Please check your connection and try again.';
+        }
+
+        // Set up connection monitoring
+        function setupConnectionMonitoring() {
+            // Check connection every 5 seconds
+            connectionCheckInterval = setInterval(checkConnection, 5000);
+            
+            // Listen for online/offline events
+            window.addEventListener('online', () => {
+                const statusElement = document.querySelector('.status-text');
+                statusElement.innerHTML = 'Connection restored! Reloading...';
+                setTimeout(() => window.location.reload(), 1000);
+            });
+
+            window.addEventListener('offline', () => {
+                const statusElement = document.querySelector('.status-text');
+                statusElement.innerHTML = 'Connection lost. You\'re now offline.';
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupConnectionMonitoring();
+            
+            // Initial connection check
+            setTimeout(checkConnection, 1000);
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (connectionCheckInterval) {
+                clearInterval(connectionCheckInterval);
+            }
+        });
+    </script>
+</body>
+</html> 

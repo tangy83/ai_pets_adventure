@@ -1,0 +1,61 @@
+{
+  "name": "ai-pets-adventure",
+  "version": "1.0.0",
+  "description": "AI Pets Adventure - A mobile-first PWA game featuring intelligent pets that assist players in solving puzzles across multiple themed worlds",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
+    "test:cross-browser": "playwright test",
+    "test:performance": "lhci autorun",
+    "test:all": "npm run test && npm run test:e2e && npm run test:cross-browser",
+    "pwa:build": "next build && workbox generateSW",
+    "pwa:analyze": "lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json"
+  },
+  "keywords": [
+    "pwa",
+    "game",
+    "ai",
+    "pets",
+    "adventure",
+    "puzzle",
+    "mobile",
+    "react",
+    "nextjs",
+    "typescript"
+  ],
+  "author": "AI Pets Adventure Team",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@types/dom-mediacapture-record": "^1.0.22",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.2.1",
+    "@types/serviceworker": "^0.0.149",
+    "cypress": "^14.5.4",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
+    "lighthouse": "^12.8.1",
+    "playwright": "^1.54.2",
+    "ts-jest": "^29.4.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2",
+    "workbox-webpack-plugin": "^7.3.0"
+  },
+  "dependencies": {
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "next": "^15.4.6",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  }
+}
