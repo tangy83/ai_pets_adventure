@@ -76,3 +76,4 @@ nginx/ssl/
 *.pem
 *.key
 *.crt 
+node_modules
