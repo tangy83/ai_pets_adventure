@@ -181,6 +181,7 @@ export class GameEngine {
     // Emit engine stopped event
     this.eventManager.emit('engineStopped', {
       timestamp: Date.now(),
+      reason: 'Manual stop',
       frameCount: this.frameCount,
       totalPlayTime: this.gameState.getTotalPlayTime()
     })

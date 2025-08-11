@@ -30,8 +30,31 @@ Object.defineProperty(navigator, 'serviceWorker', {
     register: jest.fn(),
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
+    ready: Promise.resolve({}),
   },
   writable: true,
+  configurable: true,
+})
+
+// Mock PWA-specific APIs
+Object.defineProperty(navigator, 'standalone', {
+  value: false,
+  writable: true,
+  configurable: true,
+})
+
+// Mock Network Information API
+Object.defineProperty(navigator, 'connection', {
+  value: {
+    effectiveType: '4g',
+    downlink: 10,
+    rtt: 50,
+    saveData: false,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  },
+  writable: true,
+  configurable: true,
 })
 
 // Mock IndexedDB
@@ -41,6 +64,7 @@ Object.defineProperty(window, 'indexedDB', {
     deleteDatabase: jest.fn(),
   },
   writable: true,
+  configurable: true,
 })
 
 // Mock localStorage
@@ -63,6 +87,7 @@ const localStorageMock = {
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
   writable: true,
+  configurable: true,
 })
 
 // Mock Web Speech API
@@ -73,11 +98,13 @@ Object.defineProperty(window, 'speechSynthesis', {
     getVoices: jest.fn(() => []),
   },
   writable: true,
+  configurable: true,
 })
 
 Object.defineProperty(window, 'SpeechRecognition', {
   value: jest.fn(),
   writable: true,
+  configurable: true,
 })
 
 // Mock Canvas API
@@ -109,6 +136,7 @@ Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
     clip: jest.fn(),
   })),
   writable: true,
+  configurable: true,
 })
 
 // Mock ResizeObserver
@@ -128,6 +156,7 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
+  configurable: true,
   value: jest.fn().mockImplementation(query => ({
     matches: false,
     media: query,
@@ -138,4 +167,49 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: jest.fn(),
     dispatchEvent: jest.fn(),
   })),
+})
+
+// Mock Notification API
+Object.defineProperty(window, 'Notification', {
+  value: jest.fn().mockImplementation((title, options) => ({
+    title,
+    ...options,
+    close: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  })),
+  writable: true,
+  configurable: true,
+})
+
+// Mock caches API
+Object.defineProperty(window, 'caches', {
+  value: {
+    open: jest.fn(),
+    keys: jest.fn(),
+    delete: jest.fn(),
+    match: jest.fn(),
+  },
+  writable: true,
+  configurable: true,
+})
+
+// Mock fetch API
+global.fetch = jest.fn()
+
+// Mock beforeinstallprompt event
+Object.defineProperty(window, 'beforeinstallprompt', {
+  value: null,
+  writable: true,
+  configurable: true,
+})
+
+// Mock install prompt
+Object.defineProperty(window, 'installPrompt', {
+  value: {
+    prompt: jest.fn(),
+    userChoice: Promise.resolve({ outcome: 'accepted' }),
+  },
+  writable: true,
+  configurable: true,
 }) 

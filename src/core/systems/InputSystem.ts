@@ -95,7 +95,7 @@ export class InputSystem extends BaseSystem {
       this.touchPoints.set(touch.identifier, touchPoint)
       
       // Emit touch start event
-      this.emitEvent('touchStart', {
+      this.queueEvent('touchStart', {
         id: touch.identifier,
         x: touch.clientX,
         y: touch.clientY,
@@ -116,7 +116,7 @@ export class InputSystem extends BaseSystem {
         touchPoint.y = touch.clientY
         
         // Emit touch move event
-        this.emitEvent('touchMove', {
+        this.queueEvent('touchMove', {
           id: touch.identifier,
           x: touch.clientX,
           y: touch.clientY,
@@ -143,7 +143,7 @@ export class InputSystem extends BaseSystem {
         }
         
         // Emit touch end event
-        this.emitEvent('touchEnd', {
+        this.queueEvent('touchEnd', {
           id: touch.identifier,
           x: touch.clientX,
           y: touch.clientY,
@@ -160,7 +160,7 @@ export class InputSystem extends BaseSystem {
       const touch = event.changedTouches[i]
       this.touchPoints.delete(touch.identifier)
       
-      this.emitEvent('touchCancel', {
+      this.queueEvent('touchCancel', {
         id: touch.identifier
       })
     }
@@ -179,7 +179,7 @@ export class InputSystem extends BaseSystem {
     }
     
     this.touchPoints.set(-1, touchPoint)
-    this.emitEvent('touchStart', {
+    this.queueEvent('touchStart', {
       id: -1,
       x: event.clientX,
       y: event.clientY,
@@ -193,7 +193,7 @@ export class InputSystem extends BaseSystem {
       touchPoint.x = event.clientX
       touchPoint.y = event.clientY
       
-      this.emitEvent('touchMove', {
+      this.queueEvent('touchMove', {
         id: -1,
         x: event.clientX,
         y: event.clientY,
@@ -212,7 +212,7 @@ export class InputSystem extends BaseSystem {
         this.gestures.push(gesture)
       }
       
-      this.emitEvent('touchEnd', {
+      this.queueEvent('touchEnd', {
         id: -1,
         x: event.clientX,
         y: event.clientY,
@@ -224,7 +224,7 @@ export class InputSystem extends BaseSystem {
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
-    this.emitEvent('keyDown', {
+    this.queueEvent('keyDown', {
       key: event.key,
       code: event.code,
       ctrlKey: event.ctrlKey,
@@ -234,7 +234,7 @@ export class InputSystem extends BaseSystem {
   }
 
   private handleKeyUp(event: KeyboardEvent): void {
-    this.emitEvent('keyUp', {
+    this.queueEvent('keyUp', {
       key: event.key,
       code: event.code,
       ctrlKey: event.ctrlKey,
@@ -244,21 +244,21 @@ export class InputSystem extends BaseSystem {
   }
 
   private handleGestureStart(event: any): void {
-    this.emitEvent('gestureStart', {
+    this.queueEvent('gestureStart', {
       scale: event.scale,
       rotation: event.rotation
     })
   }
 
   private handleGestureChange(event: any): void {
-    this.emitEvent('gestureChange', {
+    this.queueEvent('gestureChange', {
       scale: event.scale,
       rotation: event.rotation
     })
   }
 
   private handleGestureEnd(event: any): void {
-    this.emitEvent('gestureEnd', {
+    this.queueEvent('gestureEnd', {
       scale: event.scale,
       rotation: event.rotation
     })
@@ -389,7 +389,10 @@ export class InputSystem extends BaseSystem {
     while (this.eventQueue.length > 0) {
       const event = this.eventQueue.shift()
       if (event) {
-        this.emitEvent(event.type, event.data)
+        // Use the BaseSystem's emitEvent method with proper typing
+        if (this.eventManager) {
+          this.eventManager.emit('input', event)
+        }
       }
     }
   }
@@ -402,7 +405,8 @@ export class InputSystem extends BaseSystem {
     })
   }
 
-  private emitEvent(type: string, data: any): void {
+  // Using BaseSystem's protected emitEvent method
+  private queueEvent(type: string, data: any): void {
     const event: InputEvent = {
       type,
       data,

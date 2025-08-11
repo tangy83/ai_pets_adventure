@@ -4,8 +4,10 @@ export { GameState } from './GameState'
 export { SystemManager } from './SystemManager'
 export { EventManager } from './EventManager'
 export { TimeManager } from './TimeManager'
-export { PerformanceMonitor, PerformanceMetrics, SystemPerformance } from './PerformanceMonitor'
-export { ErrorBoundary, ErrorInfo, RecoveryStrategy } from './ErrorBoundary'
+export { PerformanceMonitor } from './PerformanceMonitor'
+export type { PerformanceMetrics, SystemPerformance } from './PerformanceMonitor'
+export { ErrorBoundary } from './ErrorBoundary'
+export type { ErrorInfo, RecoveryStrategy } from './ErrorBoundary'
 export { ComponentRegistry } from './ComponentRegistry'
 
 // ECS System exports

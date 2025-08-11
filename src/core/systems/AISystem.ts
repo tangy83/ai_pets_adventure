@@ -287,7 +287,9 @@ export class AISystem extends BaseSystem {
       this.eventManager.emit('ai_behavior_selected', {
         behaviorId: behavior.id,
         behaviorName: behavior.name,
-        action: this.currentAction
+        action: this.currentAction,
+        entityId: 'pet_1', // TODO: Get actual entity ID
+        timestamp: Date.now()
       })
     }
   }

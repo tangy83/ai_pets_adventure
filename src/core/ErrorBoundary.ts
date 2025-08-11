@@ -75,11 +75,8 @@ export class ErrorBoundary {
 
     // Emit error event
     this.eventManager.emit('systemError', {
-      errorId,
-      system,
-      error: error.message,
-      severity,
-      timestamp: errorInfo.timestamp
+      systemName: system,
+      error: error.message
     })
 
     // Attempt recovery for high/critical errors

@@ -1,11 +1,31 @@
 import React, { useEffect, useState } from 'react'
-import { GameComponent } from '../ui/GameComponent'
+import dynamic from 'next/dynamic'
 import { GameEngine } from '../core'
-import { registerServiceWorker, showNotification } from '../pwa/serviceWorkerRegistration'
-import { PWAInstallPrompt } from '../pwa/PWAInstallPrompt'
-import { PWAStatusBar } from '../pwa/PWAStatusBar'
-import { networkManager } from '../pwa/NetworkManager'
-import { offlineStorage } from '../pwa/OfflineStorage'
+
+// Dynamically import components with SSR disabled
+const GameComponent = dynamic(() => import('../ui/GameComponent').then(mod => ({ default: mod.GameComponent })), { ssr: false })
+const PWAInstallPrompt = dynamic(() => import('../pwa/PWAInstallPrompt').then(mod => ({ default: mod.PWAInstallPrompt })), { ssr: false })
+const PWAStatusBar = dynamic(() => import('../pwa/PWAStatusBar').then(mod => ({ default: mod.PWAStatusBar })), { ssr: false })
+
+// Import PWA managers conditionally to avoid SSR issues
+let networkManager: any = null
+let offlineStorage: any = null
+let registerServiceWorker: any = null
+let showNotification: any = null
+
+if (typeof window !== 'undefined') {
+  // Dynamic imports for client-side only
+  import('../pwa/NetworkManager').then(module => {
+    networkManager = module.networkManager
+  })
+  import('../pwa/OfflineStorage').then(module => {
+    offlineStorage = module.offlineStorage
+  })
+  import('../pwa/serviceWorkerRegistration').then(module => {
+    registerServiceWorker = module.registerServiceWorker
+    showNotification = module.showNotification
+  })
+}
 
 export default function HomePage() {
   const [gameEngine, setGameEngine] = useState<GameEngine | null>(null)
@@ -14,14 +34,19 @@ export default function HomePage() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+
     // Initialize PWA components
     initializePWA()
 
     // Register service worker
-    registerServiceWorker({
-      onSuccess: () => console.log('Service Worker registered successfully'),
-      onError: (error) => console.error('Service Worker registration failed:', error)
-    })
+    if (registerServiceWorker) {
+      registerServiceWorker({
+        onSuccess: () => console.log('Service Worker registered successfully'),
+        onError: (error: any) => console.error('Service Worker registration failed:', error)
+      })
+    }
 
     // Check if PWA is installed
     checkPWAInstallation()
@@ -35,12 +60,19 @@ export default function HomePage() {
 
   const initializePWA = async () => {
     try {
+      // Wait for managers to be loaded
+      if (!offlineStorage || !networkManager) {
+        console.log('PWA managers not yet loaded, retrying...')
+        setTimeout(initializePWA, 100)
+        return
+      }
+
       // Initialize offline storage
       await offlineStorage.initialize()
       console.log('Offline storage initialized')
 
       // Initialize network manager
-      networkManager.addNetworkStatusListener((status) => {
+      networkManager.addNetworkStatusListener((status: any) => {
         console.log('Network status changed:', status)
       })
       console.log('Network manager initialized')
@@ -68,10 +100,12 @@ export default function HomePage() {
       setDeferredPrompt(null)
       
       // Show success notification
-      showNotification('AI Pets Adventure Installed!', {
-        body: 'Welcome to your adventure! The game is now installed on your device.',
-        icon: '/icons/icon-192x192.png'
-      })
+      if (showNotification) {
+        showNotification('AI Pets Adventure Installed!', {
+          body: 'Welcome to your adventure! The game is now installed on your device.',
+          icon: '/icons/icon-192x192.png'
+        })
+      }
     })
   }
 
@@ -114,10 +148,12 @@ export default function HomePage() {
   }
 
   const handleShowNotification = () => {
-    showNotification('Test Notification', {
-      body: 'This is a test notification from AI Pets Adventure!',
-      icon: '/icons/icon-192x192.png'
-    })
+    if (showNotification) {
+      showNotification('Test Notification', {
+        body: 'This is a test notification from AI Pets Adventure!',
+        icon: '/icons/icon-192x192.png'
+      })
+    }
   }
 
   return (

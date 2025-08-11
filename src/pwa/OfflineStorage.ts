@@ -455,6 +455,40 @@ export class OfflineStorage {
       this.db = null
     }
   }
+
+  public async getStorageStatus(): Promise<{ used: number; total: number; percentage: number }> {
+    if (!this.db) {
+      return { used: 0, total: 0, percentage: 0 }
+    }
+
+    try {
+      const used = await this.getDatabaseSize()
+      
+      // Try to get storage quota if available
+      let total = 0
+      
+      if ('storage' in navigator && 'estimate' in navigator.storage) {
+        try {
+          const estimate = await (navigator.storage as any).estimate()
+          total = estimate.quota || 0
+        } catch (error) {
+          console.warn('Could not get storage estimate:', error)
+        }
+      }
+
+      // Fallback to estimated values if quota not available
+      if (total === 0) {
+        total = 50 * 1024 * 1024 // 50MB default
+      }
+
+      const percentage = total > 0 ? Math.round((used / total) * 100) : 0
+
+      return { used, total, percentage }
+    } catch (error) {
+      console.error('Error getting storage status:', error)
+      return { used: 0, total: 0, percentage: 0 }
+    }
+  }
 }
 
 // Export singleton instance

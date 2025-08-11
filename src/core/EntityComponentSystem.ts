@@ -570,7 +570,8 @@ export class ECSSystemManager {
         system.update(entities, deltaTime)
       } catch (error) {
         console.error(`Error updating system ${systemName}:`, error)
-        this.eventManager.emit('systemError', { systemName, error: error.message })
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        this.eventManager.emit('systemError', { systemName, error: errorMessage })
       }
     }
   }

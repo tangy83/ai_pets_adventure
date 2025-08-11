@@ -33,7 +33,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
         body: 'Welcome to your adventure! The game is now installed on your device.',
         icon: '/icons/icon-192x192.png',
         badge: '/icons/icon-72x72.png',
-        vibrate: [100, 50, 100]
+        // vibrate: [100, 50, 100] // Not supported in Notification constructor
       })
       
       onInstall?.()
@@ -58,6 +58,8 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
       
       if (outcome === 'accepted') {
         console.log('User accepted the install prompt')
+        // Call onInstall immediately when user accepts
+        onInstall?.()
         // The prompt will be handled by the appinstalled event
       } else {
         console.log('User dismissed the install prompt')
@@ -68,6 +70,8 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
     } catch (error) {
       console.error('Error showing install prompt:', error)
       setIsInstalling(false)
+      setShowPrompt(false)
+      onDismiss?.()
     }
   }
 
@@ -106,6 +110,10 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
           <div className="flex items-center text-sm text-gray-600">
             <span className="text-green-500 mr-2">✓</span>
             Offline gameplay
+          </div>
+          <div className="flex items-center text-sm text-gray-600">
+            <span className="text-green-500 mr-2">✓</span>
+            Fast loading
           </div>
           <div className="flex items-center text-sm text-gray-600">
             <span className="text-green-500 mr-2">✓</span>
@@ -152,6 +160,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
         <button
           onClick={handleDismiss}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          aria-label="Close"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

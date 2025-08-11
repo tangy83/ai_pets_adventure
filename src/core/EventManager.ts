@@ -18,6 +18,7 @@ export interface GameEvents {
     saveData: any
     timestamp: number
   }
+  gameStateChanged: any
   gameStateSaveError: {
     error: string
     timestamp: number
@@ -78,6 +79,20 @@ export interface GameEvents {
   gameReset: {
     timestamp: number
   }
+  engineStarted: {
+    timestamp: number
+    config: any
+  }
+  engineStopped: {
+    timestamp: number
+    reason: string
+    frameCount: number
+    totalPlayTime: number
+  }
+  fpsUpdated: {
+    fps: number
+    frameCount: number
+  }
   
   // ECS events
   entityCreated: {
@@ -107,6 +122,24 @@ export interface GameEvents {
   systemError: {
     systemName: string
     error: string
+  }
+  recoveryFailed: {
+    errorId: string
+    system: string
+    reason: string
+  }
+  recoverySucceeded: {
+    errorId: string
+    system: string
+    strategy: string
+  }
+  restartSystem: {
+    system: string
+    reason: string
+  }
+  resetSystemState: {
+    system: string
+    reason: string
   }
   
   // System lifecycle events
@@ -203,6 +236,45 @@ export interface GameEvents {
     remainingCooldown: number
     timestamp: number
   }
+  ai_behavior_selected: {
+    behaviorId: string
+    behaviorName: string
+    action: any
+    entityId: string
+    timestamp: number
+  }
+  ai_behavior_completed: {
+    behaviorId: string
+    behaviorName: string
+    result: any
+    entityId: string
+    timestamp: number
+  }
+  ai_move: any
+  ai_interact: any
+  ai_emote: any
+  ai_learn: any
+  ai_communicate: any
+  ai_action_completed: {
+    action: any
+  }
+  ai_behavior_added: any
+  ai_behavior_removed: any
+  touchStart: any
+  touchMove: any
+  touchEnd: any
+  touchCancel: any
+  keyDown: any
+  keyUp: any
+  gestureStart: any
+  gestureChange: any
+  gestureEnd: any
+  input: any
+  physics_collision: any
+  physics_body_update: any
+  physics_body_updated: any
+  physics_body_added: any
+  physics_body_removed: any
 }
 
 export type EventType = keyof GameEvents
@@ -221,7 +293,7 @@ export interface EventSubscription<T extends EventType = EventType> {
 }
 
 export class EventManager {
-  private events: Map<EventType, EventSubscription[]> = new Map()
+  private events: Map<EventType, EventSubscription<any>[]> = new Map()
   private eventQueue: Array<{ type: EventType; data: any; timestamp: number }> = []
   private isProcessing: boolean = false
   private subscriptionIdCounter: number = 0

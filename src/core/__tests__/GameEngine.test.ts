@@ -55,7 +55,13 @@ describe('GameEngine', () => {
     })
 
     test('should not start if already running', () => {
-      const startSpy = jest.spyOn(console, 'log')
+      const startSpy = jest.spyOn(console, 'log').mockImplementation((message) => {
+        // Only count the specific message we're testing
+        if (message === 'Game engine started') {
+          return
+        }
+      })
+      
       gameEngine.start()
       gameEngine.start() // Try to start again
       

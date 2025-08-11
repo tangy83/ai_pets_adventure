@@ -1,22 +1,23 @@
-export interface BackgroundSyncOptions {
-  tag: string
-  minDelay?: number
-  maxDelay?: number
-}
-
 export interface SyncRegistration {
   tag: string
-  registered: boolean
-  lastSync?: Date
-  nextSync?: Date
+  timestamp: number
+  lastSync: number
+  status: 'registered' | 'syncing' | 'completed' | 'failed'
+  data?: any
+}
+
+export interface SyncCallback {
+  (data: any): Promise<void>
 }
 
 export class BackgroundSyncManager {
   private static instance: BackgroundSyncManager
   private registrations: Map<string, SyncRegistration> = new Map()
-  private syncCallbacks: Map<string, () => Promise<void>> = new Map()
+  private syncCallbacks: Map<string, SyncCallback> = new Map()
 
-  private constructor() {}
+  private constructor() {
+    this.initialize()
+  }
 
   public static getInstance(): BackgroundSyncManager {
     if (!BackgroundSyncManager.instance) {
@@ -26,38 +27,53 @@ export class BackgroundSyncManager {
   }
 
   /**
+   * Reset instance for testing purposes
+   */
+  public static resetInstance(): void {
+    if (BackgroundSyncManager.instance) {
+      BackgroundSyncManager.instance.registrations.clear()
+      BackgroundSyncManager.instance.syncCallbacks.clear()
+      BackgroundSyncManager.instance = null as any
+    }
+  }
+
+  private initialize(): void {
+    console.log('Background Sync Manager initialized (simplified web version)')
+  }
+
+  /**
+   * Check if background sync is supported
+   */
+  public isSupported(): boolean {
+    // Simplified: just check if we're in a browser environment
+    return typeof window !== 'undefined' && 'localStorage' in window
+  }
+
+  /**
    * Register a background sync for offline actions
    */
-  public async registerBackgroundSync(
-    tag: string, 
-    callback: () => Promise<void>,
-    options: BackgroundSyncOptions = { tag }
-  ): Promise<boolean> {
-    if (!('serviceWorker' in navigator) || !('sync' in window.ServiceWorkerRegistration.prototype)) {
-      console.warn('Background Sync not supported')
+  public async registerBackgroundSync(tag: string, callback: SyncCallback, options?: any): Promise<boolean> {
+    if (!this.isSupported()) {
+      console.warn('Background sync not supported in this environment')
       return false
     }
 
     try {
-      const registration = await navigator.serviceWorker.ready
-      
-      // Register the sync callback
-      this.syncCallbacks.set(tag, callback)
-      
-      // Register background sync
-      await registration.sync.register(tag)
-      
-      // Store registration info
-      this.registrations.set(tag, {
+      const registration: SyncRegistration = {
         tag,
-        registered: true,
-        lastSync: new Date()
-      })
+        timestamp: Date.now(),
+        lastSync: 0,
+        status: 'registered',
+        data: options
+      }
 
-      console.log(`Background sync registered for tag: ${tag}`)
+      this.registrations.set(tag, registration)
+      this.syncCallbacks.set(tag, callback)
+
+      console.log(`Background sync registered: ${tag}`)
       return true
     } catch (error) {
-      console.error(`Failed to register background sync for tag ${tag}:`, error)
+      console.error('Failed to register background sync:', error)
       return false
     }
   }
@@ -67,29 +83,27 @@ export class BackgroundSyncManager {
    */
   public async unregisterBackgroundSync(tag: string): Promise<boolean> {
     try {
-      const registration = await navigator.serviceWorker.ready
-      
       // Remove from our tracking
       this.registrations.delete(tag)
       this.syncCallbacks.delete(tag)
       
-      console.log(`Background sync unregistered for tag: ${tag}`)
+      console.log(`Background sync unregistered: ${tag}`)
       return true
     } catch (error) {
-      console.error(`Failed to unregister background sync for tag ${tag}:`, error)
+      console.error('Failed to unregister background sync:', error)
       return false
     }
   }
 
   /**
-   * Get all registered background syncs
+   * Get all registered syncs
    */
   public getRegistrations(): SyncRegistration[] {
     return Array.from(this.registrations.values())
   }
 
   /**
-   * Check if a specific sync is registered
+   * Check if a sync is registered
    */
   public isRegistered(tag: string): boolean {
     return this.registrations.has(tag)
@@ -98,39 +112,71 @@ export class BackgroundSyncManager {
   /**
    * Get sync callback for a tag
    */
-  public getSyncCallback(tag: string): (() => Promise<void>) | undefined {
+  public getSyncCallback(tag: string): SyncCallback | undefined {
     return this.syncCallbacks.get(tag)
   }
 
   /**
-   * Update sync registration with last sync time
+   * Update last sync time for a registration
    */
   public updateLastSync(tag: string): void {
     const registration = this.registrations.get(tag)
     if (registration) {
-      registration.lastSync = new Date()
-      this.registrations.set(tag, registration)
+      registration.lastSync = Date.now()
+      registration.status = 'completed'
     }
   }
 
   /**
-   * Check if background sync is supported
+   * Get sync status for a tag
    */
-  public isSupported(): boolean {
-    return 'serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype
+  public getSyncStatus(tag: string): 'not_supported' | 'not_registered' | 'registered' | 'syncing' | 'completed' | 'failed' {
+    if (!this.isSupported()) {
+      return 'not_supported'
+    }
+
+    const registration = this.registrations.get(tag)
+    if (!registration) {
+      return 'not_registered'
+    }
+
+    return registration.status
   }
 
   /**
-   * Get sync status for display
+   * Manual sync trigger (for web version)
    */
-  public getSyncStatus(tag: string): 'registered' | 'pending' | 'not_supported' {
-    if (!this.isSupported()) return 'not_supported'
-    if (!this.isRegistered(tag)) return 'not_supported'
-    
+  public async triggerSync(tag: string): Promise<boolean> {
     const registration = this.registrations.get(tag)
-    if (!registration) return 'not_supported'
-    
-    return 'registered'
+    const callback = this.syncCallbacks.get(tag)
+
+    if (!registration || !callback) {
+      console.warn(`No sync registration found for tag: ${tag}`)
+      return false
+    }
+
+    try {
+      registration.status = 'syncing'
+      await callback(registration.data)
+      registration.status = 'completed'
+      registration.lastSync = Date.now()
+      
+      console.log(`Manual sync completed for: ${tag}`)
+      return true
+    } catch (error) {
+      registration.status = 'failed'
+      console.error(`Manual sync failed for ${tag}:`, error)
+      return false
+    }
+  }
+
+  /**
+   * Clean up resources
+   */
+  public cleanup(): void {
+    this.registrations.clear()
+    this.syncCallbacks.clear()
+    console.log('Background Sync Manager cleaned up')
   }
 }
 

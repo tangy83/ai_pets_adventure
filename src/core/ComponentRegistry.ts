@@ -82,7 +82,7 @@ export class ComponentRegistry {
   /**
    * Get component constructor for a type
    */
-  public getComponentConstructor(type: string): new (entityId: string, ...args: any[]) => Component | undefined {
+  public getComponentConstructor(type: string): (new (entityId: string, ...args: any[]) => Component) | undefined {
     return this.componentTypes.get(type)
   }
 

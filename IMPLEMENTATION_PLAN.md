@@ -1,29 +1,28 @@
-# 🎮 AI Pets Adventure — Implementation Plan
+# 🎮 AI Pets Adventure — Implementation Plan (Web-First)
 
 ## 🎯 Project Overview
 
-**AI Pets Adventure** is a mobile-first PWA game featuring intelligent pets that assist players in solving puzzles across multiple themed worlds. The game combines AI-driven pet behavior, educational content, and multiplayer features in a progressive web application format.
+**AI Pets Adventure** is a web-based game featuring intelligent pets that assist players in solving puzzles across multiple themed worlds. The game combines AI-driven pet behavior, educational content, and responsive design optimized for modern web browsers.
 
-## 🏗️ Phase 1: PWA Foundation & Core Architecture
+## 🏗️ Phase 1: Web Foundation & Core Architecture
 
-### **1.1 PWA Technology Stack & Project Structure**
+### **1.1 Web Technology Stack & Project Structure**
 
 ```
 ai_pets_adventure/
-├── public/            # PWA assets & manifest
-│   ├── manifest.json  # PWA configuration
-│   ├── service-worker.js # Offline & caching
-│   ├── icons/         # App icons (multiple sizes)
-│   └── splash/        # Splash screen assets
+├── public/            # Web assets
+│   ├── manifest.json  # Basic PWA configuration
+│   ├── service-worker.js # Simple offline caching
+│   └── icons/         # App icons (basic sizes)
 ├── src/
 │   ├── core/          # Game engine & core systems
 │   ├── entities/      # Game objects (Player, Pet, NPCs)
 │   ├── worlds/        # World environments & levels
 │   ├── ai/           # AI systems & pet behavior
-│   ├── ui/           # PWA-optimized UI components
+│   ├── ui/           # Responsive web UI components
 │   ├── audio/        # Sound & music systems
-│   ├── networking/   # Multiplayer & real-time features
-│   ├── pwa/          # PWA-specific features
+│   ├── networking/   # Basic multiplayer features
+│   ├── pwa/          # Simplified PWA features
 │   └── utils/        # Helper functions & utilities
 ├── assets/           # Art, audio, configuration files
 ├── tests/            # Unit & integration tests
@@ -32,23 +31,22 @@ ai_pets_adventure/
 
 **Technology Stack:**
 - **Frontend**: React/Next.js with TypeScript
-- **PWA Framework**: Workbox for service worker management
-- **Game Engine**: Phaser.js (mobile-optimized) or PixiJS
+- **PWA Framework**: Basic service worker for offline caching
+- **Game Engine**: PixiJS or Canvas-based rendering
 - **AI**: TensorFlow.js (client-side) + OpenAI API for complex tasks
 - **Backend**: Node.js with Express/Fastify
-- **Database**: PostgreSQL for user data, Redis for real-time
+- **Database**: PostgreSQL for user data
 - **Real-time**: Socket.io with WebSocket fallbacks
-- **Storage**: IndexedDB for offline data, localStorage for preferences
+- **Storage**: localStorage for preferences, basic IndexedDB for game state
 
-### **1.2 PWA Core Features**
+### **1.2 Simplified PWA Features**
 
 ```
-PWA System:
-├── Service Worker (offline gameplay, caching)
-├── App Manifest (install prompts, app-like experience)
-├── Offline Storage (IndexedDB for game state)
-├── Push Notifications (quest reminders, social features)
-├── Background Sync (data synchronization when online)
+PWA System (Simplified):
+├── Service Worker (basic offline caching)
+├── App Manifest (install prompts)
+├── Basic Offline Storage (localStorage + simple IndexedDB)
+├── Responsive Design (mobile-friendly but not mobile-first)
 └── Install Experience (add to home screen)
 ```
 
@@ -64,13 +62,13 @@ PWA System:
 - Reusable components (Position, Health, AI, Renderable)
 - Easy to extend and modify
 
-## 🎮 Phase 2: Core Game Systems & Mobile Optimization
+## 🎮 Phase 2: Core Game Systems & Web Optimization
 
 ### **2.1 Game Loop & Time Management**
 
 ```
 Game Loop:
-├── Input Processing
+├── Input Processing (keyboard, mouse, touch)
 ├── AI Update (Pet behavior, NPCs)
 ├── Physics Update (Collisions, movement)
 ├── Game Logic (Quest progress, scoring)
@@ -78,26 +76,26 @@ Game Loop:
 └── Audio Update
 ```
 
-### **2.2 Touch & Gesture Controls**
+### **2.2 Web Input Controls**
 
 ```
 Input System:
-├── Touch Controls (tap, swipe, pinch, draw)
-├── Gesture Recognition (custom pet commands)
-├── Haptic Feedback (vibration for important events)
-├── Accessibility Controls (voice commands, screen reader)
-└── Adaptive UI (landscape/portrait orientation)
+├── Keyboard Controls (WASD, arrow keys, spacebar)
+├── Mouse Controls (click, drag, hover)
+├── Touch Controls (basic tap and swipe)
+├── Accessibility Controls (keyboard navigation, screen reader)
+└── Responsive UI (adapts to screen size)
 ```
 
-### **2.3 Performance Optimization for Mobile**
+### **2.3 Performance Optimization for Web**
 
 ```
-Mobile Optimization:
+Web Optimization:
 ├── Asset Compression (WebP images, compressed audio)
 ├── Lazy Loading (worlds, textures, audio)
 ├── Memory Management (texture atlasing, object pooling)
-├── Battery Optimization (reduced frame rate when idle)
-└── Network Efficiency (progressive loading, offline-first)
+├── Network Efficiency (progressive loading)
+└── Browser Compatibility (modern browsers, graceful fallbacks)
 ```
 
 ### **2.4 World & Level Management**

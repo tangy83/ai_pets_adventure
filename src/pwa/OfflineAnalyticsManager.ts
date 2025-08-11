@@ -1,57 +1,54 @@
-export interface OfflineEvent {
+export interface AnalyticsEvent {
   id: string
-  type: 'app_launch' | 'quest_start' | 'quest_complete' | 'pet_interaction' | 'asset_access' | 'sync_attempt' | 'error'
-  timestamp: number
+  type: string
   data: any
-  sessionId: string
-  offline: boolean
+  timestamp: number
+  sessionId?: string
 }
 
-export interface OfflineSession {
+export interface AnalyticsSession {
   id: string
   startTime: number
   endTime?: number
-  duration: number
-  offlineActions: number
-  errors: number
-  assetsAccessed: string[]
-  questsStarted: string[]
-  questsCompleted: string[]
-}
-
-export interface OfflineMetrics {
-  totalOfflineTime: number
-  averageSessionDuration: number
-  mostAccessedAssets: Array<{ asset: string; count: number }>
-  commonOfflineActions: Array<{ action: string; count: number }>
-  errorFrequency: Array<{ error: string; count: number }>
-  offlineEfficiency: number // percentage of offline actions that succeeded
+  events: string[]
+  metadata: {
+    userAgent: string
+    screenSize: string
+    language: string
+  }
 }
 
 export interface AnalyticsConfig {
   enabled: boolean
+  enableDebug: boolean
   maxEvents: number
   maxSessions: number
-  flushInterval: number // milliseconds
-  enableDebug: boolean
+  retentionDays: number
+}
+
+export interface OfflineMetrics {
+  totalEvents: number
+  totalSessions: number
+  averageSessionDuration: number
+  mostActiveHours: number[]
+  popularEventTypes: string[]
 }
 
 export class OfflineAnalyticsManager {
   private static instance: OfflineAnalyticsManager
-  private events: OfflineEvent[] = []
-  private sessions: Map<string, OfflineSession> = new Map()
-  private currentSession: OfflineSession | null = null
   private config: AnalyticsConfig
-  private flushTimer: NodeJS.Timeout | null = null
+  private events: AnalyticsEvent[] = []
+  private sessions: Map<string, AnalyticsSession> = new Map()
+  private currentSession: AnalyticsSession | null = null
+  private sessionTimer: NodeJS.Timeout | null = null
 
   private constructor() {
     this.config = {
       enabled: true,
+      enableDebug: false,
       maxEvents: 1000,
       maxSessions: 100,
-      flushInterval: 300000, // 5 minutes
-      flushInterval: 300000, // 5 minutes
-      enableDebug: false
+      retentionDays: 30
     }
     this.initialize()
   }
@@ -63,51 +60,67 @@ export class OfflineAnalyticsManager {
     return OfflineAnalyticsManager.instance
   }
 
+  /**
+   * Reset instance for testing purposes
+   */
+  public static resetInstance(): void {
+    if (OfflineAnalyticsManager.instance) {
+      OfflineAnalyticsManager.instance.cleanup()
+      OfflineAnalyticsManager.instance = null as any
+    }
+  }
+
   private initialize(): void {
     if (!this.config.enabled) return
 
+    // Load existing data from localStorage
+    this.loadFromStorage()
+    
     // Start new session
-    this.startSession()
-
-    // Set up periodic flush
-    this.startPeriodicFlush()
-
-    // Listen for page visibility changes
-    this.setupVisibilityListener()
-
-    // Listen for online/offline changes
-    this.setupNetworkListener()
-
+    this.startNewSession()
+    
+    // Set up periodic cleanup
+    this.setupCleanupTimer()
+    
     if (this.config.enableDebug) {
       console.log('Offline Analytics Manager initialized')
     }
   }
 
   /**
+   * Reinitialize with current config (for testing)
+   */
+  public reinitialize(): void {
+    this.initialize()
+  }
+
+  /**
    * Start a new analytics session
    */
-  private startSession(): void {
-    const sessionId = this.generateId()
+  public startNewSession(): void {
+    if (this.currentSession) {
+      this.endCurrentSession()
+    }
+
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    
     this.currentSession = {
       id: sessionId,
       startTime: Date.now(),
-      duration: 0,
-      offlineActions: 0,
-      errors: 0,
-      assetsAccessed: [],
-      questsStarted: [],
-      questsCompleted: []
+      events: [],
+      metadata: {
+        userAgent: navigator.userAgent,
+        screenSize: `${window.screen.width}x${window.screen.height}`,
+        language: navigator.language
+      }
     }
 
     this.sessions.set(sessionId, this.currentSession)
-
-    // Track session start
-    this.trackEvent('app_launch', {
-      sessionId,
-      userAgent: navigator.userAgent,
-      screenSize: `${screen.width}x${screen.height}`,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-    })
+    
+    // Set session timer for automatic cleanup
+    this.sessionTimer = setInterval(() => {
+      this.clearOldData()
+    }, 60000) // Check every minute
 
     if (this.config.enableDebug) {
       console.log('New analytics session started:', sessionId)
@@ -115,280 +128,139 @@ export class OfflineAnalyticsManager {
   }
 
   /**
-   * End current session
+   * End the current session
    */
-  private endSession(): void {
+  public endCurrentSession(): void {
     if (!this.currentSession) return
 
     this.currentSession.endTime = Date.now()
-    this.currentSession.duration = this.currentSession.endTime - this.currentSession.startTime
-
-    // Update session in map
-    this.sessions.set(this.currentSession.id, this.currentSession)
+    
+    if (this.sessionTimer) {
+      clearInterval(this.sessionTimer)
+      this.sessionTimer = null
+    }
 
     if (this.config.enableDebug) {
-      console.log('Analytics session ended:', this.currentSession)
+      console.log('Analytics session ended:', this.currentSession.id)
     }
 
     this.currentSession = null
   }
 
   /**
-   * Track an offline event
+   * Track an analytics event
    */
-  public trackEvent(type: OfflineEvent['type'], data: any = {}): void {
+  public trackEvent(type: string, data: any = {}): void {
     if (!this.config.enabled || !this.currentSession) return
 
-    const event: OfflineEvent = {
-      id: this.generateId(),
+    const event: AnalyticsEvent = {
+      id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type,
-      timestamp: Date.now(),
       data,
-      sessionId: this.currentSession.id,
-      offline: !navigator.onLine
+      timestamp: Date.now(),
+      sessionId: this.currentSession.id
     }
 
     this.events.push(event)
+    this.currentSession.events.push(event.id)
 
-    // Update session metrics
-    this.updateSessionMetrics(type, data)
-
-    // Limit events array size
+    // Enforce max events limit
     if (this.events.length > this.config.maxEvents) {
       this.events = this.events.slice(-this.config.maxEvents)
     }
 
+    // Save to storage
+    this.saveToStorage()
+
     if (this.config.enableDebug) {
-      console.log('Offline event tracked:', event)
-    }
-  }
-
-  /**
-   * Update session metrics based on event
-   */
-  private updateSessionMetrics(type: OfflineEvent['type'], data: any): void {
-    if (!this.currentSession) return
-
-    switch (type) {
-      case 'quest_start':
-        if (data.questId && !this.currentSession.questsStarted.includes(data.questId)) {
-          this.currentSession.questsStarted.push(data.questId)
-        }
-        break
-      case 'quest_complete':
-        if (data.questId && !this.currentSession.questsCompleted.includes(data.questId)) {
-          this.currentSession.questsCompleted.push(data.questId)
-        }
-        break
-      case 'asset_access':
-        if (data.assetPath && !this.currentSession.assetsAccessed.includes(data.assetPath)) {
-          this.currentSession.assetsAccessed.push(data.assetPath)
-        }
-        break
-      case 'error':
-        this.currentSession.errors++
-        break
-    }
-
-    if (type !== 'app_launch') {
-      this.currentSession.offlineActions++
-    }
-  }
-
-  /**
-   * Track quest start
-   */
-  public trackQuestStart(questId: string, questName: string, worldId: string): void {
-    this.trackEvent('quest_start', {
-      questId,
-      questName,
-      worldId,
-      offline: !navigator.onLine
-    })
-  }
-
-  /**
-   * Track quest completion
-   */
-  public trackQuestComplete(questId: string, questName: string, worldId: string, duration: number): void {
-    this.trackEvent('quest_complete', {
-      questId,
-      questName,
-      worldId,
-      duration,
-      offline: !navigator.onLine
-    })
-  }
-
-  /**
-   * Track asset access
-   */
-  public trackAssetAccess(assetPath: string, assetType: string, cached: boolean): void {
-    this.trackEvent('asset_access', {
-      assetPath,
-      assetType,
-      cached,
-      offline: !navigator.onLine
-    })
-  }
-
-  /**
-   * Track sync attempt
-   */
-  public trackSyncAttempt(syncType: string, success: boolean, error?: string): void {
-    this.trackEvent('sync_attempt', {
-      syncType,
-      success,
-      error,
-      offline: !navigator.onLine
-    })
-  }
-
-  /**
-   * Track error
-   */
-  public trackError(errorType: string, errorMessage: string, context: any = {}): void {
-    this.trackEvent('error', {
-      errorType,
-      errorMessage,
-      context,
-      offline: !navigator.onLine
-    })
-  }
-
-  /**
-   * Track pet interaction
-   */
-  public trackPetInteraction(petId: string, interactionType: string, duration: number): void {
-    this.trackEvent('pet_interaction', {
-      petId,
-      interactionType,
-      duration,
-      offline: !navigator.onLine
-    })
-  }
-
-  /**
-   * Get offline metrics
-   */
-  public getOfflineMetrics(): OfflineMetrics {
-    const now = Date.now()
-    const totalOfflineTime = Array.from(this.sessions.values())
-      .reduce((total, session) => total + session.duration, 0)
-
-    const averageSessionDuration = this.sessions.size > 0 
-      ? totalOfflineTime / this.sessions.size 
-      : 0
-
-    // Most accessed assets
-    const assetCounts = new Map<string, number>()
-    this.events
-      .filter(event => event.type === 'asset_access')
-      .forEach(event => {
-        const asset = event.data.assetPath
-        assetCounts.set(asset, (assetCounts.get(asset) || 0) + 1)
-      })
-
-    const mostAccessedAssets = Array.from(assetCounts.entries())
-      .map(([asset, count]) => ({ asset, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10)
-
-    // Common offline actions
-    const actionCounts = new Map<string, number>()
-    this.events
-      .filter(event => event.type !== 'app_launch')
-      .forEach(event => {
-        actionCounts.set(event.type, (actionCounts.get(event.type) || 0) + 1)
-      })
-
-    const commonOfflineActions = Array.from(actionCounts.entries())
-      .map(([action, count]) => ({ action, count }))
-      .sort((a, b) => b.count - a.count)
-
-    // Error frequency
-    const errorCounts = new Map<string, number>()
-    this.events
-      .filter(event => event.type === 'error')
-      .forEach(event => {
-        const error = event.data.errorType
-        errorCounts.set(error, (errorCounts.get(error) || 0) + 1)
-      })
-
-    const errorFrequency = Array.from(errorCounts.entries())
-      .map(([error, count]) => ({ error, count }))
-      .sort((a, b) => b.count - a.count)
-
-    // Offline efficiency
-    const totalActions = this.events.filter(event => event.type !== 'app_launch').length
-    const errorActions = this.events.filter(event => event.type === 'error').length
-    const offlineEfficiency = totalActions > 0 ? ((totalActions - errorActions) / totalActions) * 100 : 100
-
-    return {
-      totalOfflineTime,
-      averageSessionDuration,
-      mostAccessedAssets,
-      commonOfflineActions,
-      errorFrequency,
-      offlineEfficiency
+      console.log('Analytics event tracked:', event)
     }
   }
 
   /**
    * Get current session
    */
-  public getCurrentSession(): OfflineSession | null {
+  public getCurrentSession(): AnalyticsSession | null {
     return this.currentSession
+  }
+
+  /**
+   * Get all events
+   */
+  public getEvents(): AnalyticsEvent[] {
+    return [...this.events]
   }
 
   /**
    * Get all sessions
    */
-  public getAllSessions(): OfflineSession[] {
+  public getSessions(): AnalyticsSession[] {
     return Array.from(this.sessions.values())
   }
 
   /**
-   * Get events for current session
+   * Get offline metrics
    */
-  public getCurrentSessionEvents(): OfflineEvent[] {
-    if (!this.currentSession) return []
-    return this.events.filter(event => event.sessionId === this.currentSession!.id)
-  }
-
-  /**
-   * Clear old data
-   */
-  public clearOldData(maxAge: number = 7 * 24 * 60 * 60 * 1000): void { // 7 days
-    const cutoff = Date.now() - maxAge
-
-    // Clear old events
-    this.events = this.events.filter(event => event.timestamp > cutoff)
-
-    // Clear old sessions
-    for (const [sessionId, session] of this.sessions.entries()) {
-      if (session.endTime && session.endTime < cutoff) {
-        this.sessions.delete(sessionId)
+  public getOfflineMetrics(): OfflineMetrics {
+    const totalEvents = this.events.length
+    const totalSessions = this.sessions.size
+    
+    let totalDuration = 0
+    let sessionCount = 0
+    
+    this.sessions.forEach(session => {
+      if (session.endTime) {
+        totalDuration += session.endTime - session.startTime
+        sessionCount++
       }
-    }
+    })
 
-    if (this.config.enableDebug) {
-      console.log('Old analytics data cleared')
+    const averageSessionDuration = sessionCount > 0 ? totalDuration / sessionCount : 0
+
+    // Calculate most active hours (simplified)
+    const hourCounts = new Array(24).fill(0)
+    this.events.forEach(event => {
+      const hour = new Date(event.timestamp).getHours()
+      hourCounts[hour]++
+    })
+    
+    const mostActiveHours = hourCounts
+      .map((count, hour) => ({ hour, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3)
+      .map(h => h.hour)
+
+    // Calculate popular event types
+    const eventTypeCounts = new Map<string, number>()
+    this.events.forEach(event => {
+      eventTypeCounts.set(event.type, (eventTypeCounts.get(event.type) || 0) + 1)
+    })
+    
+    const popularEventTypes = Array.from(eventTypeCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([type]) => type)
+
+    return {
+      totalEvents,
+      totalSessions,
+      averageSessionDuration,
+      mostActiveHours,
+      popularEventTypes
     }
   }
 
   /**
    * Export analytics data
    */
-  public exportData(): string {
-    const data = {
+  public exportData(): any {
+    return {
       events: this.events,
       sessions: Array.from(this.sessions.values()),
       metrics: this.getOfflineMetrics(),
+      config: this.config,
       exportTime: new Date().toISOString()
     }
-
-    return JSON.stringify(data, null, 2)
   }
 
   /**
@@ -403,16 +275,19 @@ export class OfflineAnalyticsManager {
       }
       
       if (parsed.sessions && Array.isArray(parsed.sessions)) {
-        this.sessions.clear()
-        parsed.sessions.forEach((session: OfflineSession) => {
+        parsed.sessions.forEach((session: AnalyticsSession) => {
           this.sessions.set(session.id, session)
         })
+      }
+
+      if (parsed.config && typeof parsed.config === 'object') {
+        this.config = { ...this.config, ...parsed.config }
       }
 
       if (this.config.enableDebug) {
         console.log('Analytics data imported successfully')
       }
-
+      
       return true
     } catch (error) {
       console.error('Failed to import analytics data:', error)
@@ -421,112 +296,88 @@ export class OfflineAnalyticsManager {
   }
 
   /**
-   * Set configuration
+   * Clear old data
    */
-  public setConfig(config: Partial<AnalyticsConfig>): void {
-    this.config = { ...this.config, ...config }
-  }
-
-  /**
-   * Get configuration
-   */
-  public getConfig(): AnalyticsConfig {
-    return { ...this.config }
-  }
-
-  /**
-   * Enable/disable analytics
-   */
-  public setEnabled(enabled: boolean): void {
-    this.config.enabled = enabled
+  public clearOldData(): void {
+    const cutoff = Date.now() - (this.config.retentionDays * 24 * 60 * 60 * 1000)
     
-    if (enabled && !this.currentSession) {
-      this.startSession()
-    } else if (!enabled && this.currentSession) {
-      this.endSession()
+    // Clear old events
+    this.events = this.events.filter(event => event.timestamp > cutoff)
+    
+    // Clear old sessions (but keep current session)
+    for (const [sessionId, session] of this.sessions.entries()) {
+      if (session.endTime && session.endTime < cutoff && sessionId !== this.currentSession?.id) {
+        this.sessions.delete(sessionId)
+      }
+    }
+
+    // Save to storage
+    this.saveToStorage()
+
+    if (this.config.enableDebug) {
+      console.log('Old analytics data cleared')
     }
   }
 
   /**
-   * Start periodic flush
+   * Update configuration
    */
-  private startPeriodicFlush(): void {
-    if (this.flushTimer) {
-      clearInterval(this.flushTimer)
-    }
-
-    this.flushTimer = setInterval(() => {
-      this.flushData()
-    }, this.config.flushInterval)
+  public updateConfig(newConfig: Partial<AnalyticsConfig>): void {
+    this.config = { ...this.config, ...newConfig }
+    this.saveToStorage()
   }
 
   /**
-   * Flush data to storage
+   * Save data to localStorage
    */
-  private async flushData(): Promise<void> {
+  private saveToStorage(): void {
     try {
-      // Save to localStorage or IndexedDB
       const data = this.exportData()
-      localStorage.setItem('offline-analytics', data)
+      localStorage.setItem('offlineAnalytics', JSON.stringify(data))
+    } catch (error) {
+      console.error('Failed to save analytics data to storage:', error)
+    }
+  }
 
-      if (this.config.enableDebug) {
-        console.log('Analytics data flushed to storage')
+  /**
+   * Load data from localStorage
+   */
+  private loadFromStorage(): void {
+    try {
+      const data = localStorage.getItem('offlineAnalytics')
+      if (data) {
+        this.importData(data)
       }
     } catch (error) {
-      console.error('Failed to flush analytics data:', error)
+      console.error('Failed to load analytics data from storage:', error)
     }
   }
 
   /**
-   * Setup visibility listener
+   * Set up cleanup timer
    */
-  private setupVisibilityListener(): void {
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        this.endSession()
-      } else {
-        this.startSession()
-      }
-    })
+  private setupCleanupTimer(): void {
+    // Clean up old data every hour
+    setInterval(() => {
+      this.clearOldData()
+    }, 60 * 60 * 1000)
   }
 
   /**
-   * Setup network listener
-   */
-  private setupNetworkListener(): void {
-    window.addEventListener('online', () => {
-      this.trackEvent('sync_attempt', {
-        syncType: 'network_restored',
-        success: true
-      })
-    })
-
-    window.addEventListener('offline', () => {
-      this.trackEvent('sync_attempt', {
-        syncType: 'network_lost',
-        success: false,
-        error: 'Network connection lost'
-      })
-    })
-  }
-
-  /**
-   * Generate unique ID
-   */
-  private generateId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2)
-  }
-
-  /**
-   * Cleanup
+   * Clean up resources
    */
   public cleanup(): void {
-    if (this.flushTimer) {
-      clearInterval(this.flushTimer)
+    if (this.sessionTimer) {
+      clearInterval(this.sessionTimer)
+      this.sessionTimer = null
     }
     
-    this.endSession()
-    this.flushData()
+    this.endCurrentSession()
+    this.saveToStorage()
+    
+    if (this.config.enableDebug) {
+      console.log('Offline Analytics Manager cleaned up')
+    }
   }
 }
 

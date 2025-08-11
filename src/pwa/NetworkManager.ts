@@ -1,4 +1,5 @@
-import { offlineStorage, OfflineAction } from './OfflineStorage'
+import { offlineStorage } from './OfflineStorage'
+import type { OfflineAction } from './OfflineStorage'
 import { showNotification } from './serviceWorkerRegistration'
 
 export interface NetworkStatus {
@@ -22,9 +23,22 @@ export class NetworkManager {
   private isOnline: boolean = navigator.onLine
   private networkStatus: NetworkStatus
   private syncInProgress: boolean = false
-  private offlineActionsQueue: OfflineAction[] = []
+  private _offlineActionsQueue: OfflineAction[] = []
   private syncInterval: NodeJS.Timeout | null = null
   private listeners: Array<(status: NetworkStatus) => void> = []
+
+  // Getter to ensure offlineActionsQueue is always initialized
+  private get offlineActionsQueue(): OfflineAction[] {
+    if (!this._offlineActionsQueue) {
+      this._offlineActionsQueue = []
+    }
+    return this._offlineActionsQueue
+  }
+
+  // Setter to maintain the property
+  private set offlineActionsQueue(value: OfflineAction[]) {
+    this._offlineActionsQueue = value
+  }
 
   private constructor() {
     this.networkStatus = this.getDefaultNetworkStatus()
@@ -36,6 +50,13 @@ export class NetworkManager {
       NetworkManager.instance = new NetworkManager()
     }
     return NetworkManager.instance
+  }
+
+  public static resetInstance(): void {
+    if (NetworkManager.instance) {
+      NetworkManager.instance.cleanup()
+      NetworkManager.instance = null as any
+    }
   }
 
   private getDefaultNetworkStatus(): NetworkStatus {

@@ -152,7 +152,9 @@ export class SystemManager {
 
     // Check for dependency cycles
     if (this.hasDependencyCycles(systemsWithConfigs)) {
-      console.error('Circular dependency detected in systems!')
+      console.error('Circular dependency detected in systems! Falling back to priority-based order.')
+      // Fall back to priority-based order when circular dependencies are detected
+      this.systemOrder = systemsWithConfigs.map(s => s.name)
       return
     }
 
@@ -227,7 +229,10 @@ export class SystemManager {
   }
 
   public getAllSystems(): GameSystem[] {
-    return Array.from(this.systems.values())
+    // Return systems in dependency-resolved order, not insertion order
+    return this.systemOrder
+      .map(systemName => this.systems.get(systemName))
+      .filter((system): system is GameSystem => system !== undefined)
   }
 
   public getSystemNames(): string[] {

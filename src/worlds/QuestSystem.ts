@@ -23,6 +23,7 @@ export interface Quest {
   description: string
   worldId: string
   level: number
+  type: QuestType
   objectives: QuestObjective[]
   rewards: QuestReward
   timeLimit?: number
@@ -182,7 +183,7 @@ export class QuestSystem {
         {
           id: 'tutorial_2',
           description: 'Complete your first quest',
-          type: 'complete',
+          type: 'interact',
           target: 'quest_completion',
           amount: 1,
           current: 0,
