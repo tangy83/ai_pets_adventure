@@ -1,3 +1,6 @@
+import { DifficultyScalingSystem, DifficultyFactors } from './DifficultyScalingSystem'
+import { EventManager } from '../core/EventManager'
+
 export interface QuestObjective {
   id: string
   description: string
@@ -41,6 +44,8 @@ export class QuestSystem {
   private quests: Map<string, Quest> = new Map()
   private activeQuests: Set<string> = new Set()
   private completedQuests: Set<string> = new Set()
+  private difficultyScaling: DifficultyScalingSystem | null = null
+  private eventManager: EventManager | null = null
 
   private constructor() {
     this.initializeDefaultQuests()
@@ -51,6 +56,14 @@ export class QuestSystem {
       QuestSystem.instance = new QuestSystem()
     }
     return QuestSystem.instance
+  }
+
+  // Initialize difficulty scaling system and event manager
+  public initializeDifficultyScaling(difficultyScaling: DifficultyScalingSystem, eventManager?: EventManager): void {
+    this.difficultyScaling = difficultyScaling
+    if (eventManager) {
+      this.eventManager = eventManager
+    }
   }
 
   // Quest management
@@ -67,18 +80,51 @@ export class QuestSystem {
     return quest
   }
 
-  public startQuest(questId: string): boolean {
+  // Enhanced quest creation with difficulty scaling
+  public createQuestWithScaling(
+    questData: Omit<Quest, 'id' | 'isActive' | 'isCompleted' | 'isFailed'>, 
+    playerId: string
+  ): Quest {
+    const quest = this.createQuest(questData)
+    
+    // Apply AI-based difficulty scaling if available
+    if (this.difficultyScaling) {
+      const adjustedDifficulty = this.difficultyScaling.calculateAdjustedDifficulty(quest.id, playerId)
+      quest.level = Math.round(adjustedDifficulty)
+    }
+    
+    return quest
+  }
+
+  // Enhanced quest start with difficulty tracking
+  public startQuest(questId: string, playerId: string): boolean {
     const quest = this.quests.get(questId)
     if (!quest || quest.isActive || quest.isCompleted) return false
+
+    // Get adjusted difficulty for this player
+    let adjustedDifficulty = quest.level
+    if (this.difficultyScaling) {
+      adjustedDifficulty = this.difficultyScaling.calculateAdjustedDifficulty(questId, playerId)
+    }
 
     quest.isActive = true
     quest.startedAt = Date.now()
     this.activeQuests.add(questId)
     
+    // Emit quest started event with difficulty information
+    if (this.eventManager) {
+      this.eventManager.emit('questStarted', {
+        questId,
+        previousQuest: null,
+        player: { id: playerId }
+      })
+    }
+    
     return true
   }
 
-  public completeQuest(questId: string): boolean {
+  // Enhanced quest completion with performance tracking
+  public completeQuest(questId: string, playerId: string, completionTime?: number): boolean {
     const quest = this.quests.get(questId)
     if (!quest || !quest.isActive || quest.isCompleted) return false
 
@@ -93,10 +139,26 @@ export class QuestSystem {
     this.activeQuests.delete(questId)
     this.completedQuests.add(questId)
     
+    // Emit quest completed event with performance data
+    if (this.eventManager) {
+      this.eventManager.emit('questCompleted', {
+        questId,
+        rewards: [
+          { type: 'experience', amount: quest.rewards.experience },
+          { type: 'coins', amount: quest.rewards.coins },
+          ...quest.rewards.items.map(item => ({ type: 'item', itemId: item })),
+          { type: 'petBond', amount: quest.rewards.petBond }
+        ],
+        player: { id: playerId },
+        pet: { id: 'default_pet' }
+      })
+    }
+    
     return true
   }
 
-  public failQuest(questId: string): boolean {
+  // Enhanced quest failure with performance tracking
+  public failQuest(questId: string, playerId: string, failureReason?: string): boolean {
     const quest = this.quests.get(questId)
     if (!quest || !quest.isActive) return false
 
@@ -104,22 +166,42 @@ export class QuestSystem {
     quest.isActive = false
     this.activeQuests.delete(questId)
     
+    // Emit quest failed event with failure data
+    if (this.eventManager) {
+      this.eventManager.emit('questFailed', {
+        questId,
+        player: { id: playerId }
+      })
+    }
+    
     return true
   }
 
-  public updateObjective(questId: string, objectiveId: string, progress: number): boolean {
+  // Enhanced objective update with performance tracking
+  public updateObjective(questId: string, objectiveId: string, progress: number, playerId: string): boolean {
     const quest = this.quests.get(questId)
     if (!quest || !quest.isActive) return false
 
     const objective = quest.objectives.find(obj => obj.id === objectiveId)
     if (!objective) return false
 
+    const previousProgress = objective.current
     objective.current = Math.min(objective.amount, objective.current + progress)
+    const wasCompleted = objective.completed
     objective.completed = objective.current >= objective.amount
+
+    // Emit objective completed event if newly completed
+    if (objective.completed && !wasCompleted && this.eventManager) {
+      this.eventManager.emit('objectiveCompleted', {
+        objectiveId,
+        questId,
+        player: { id: playerId }
+      })
+    }
 
     // Check if quest can be completed
     if (this.canCompleteQuest(quest)) {
-      this.completeQuest(questId)
+      this.completeQuest(questId, playerId)
     }
 
     return true
@@ -128,6 +210,22 @@ export class QuestSystem {
   // Quest queries
   public getQuest(questId: string): Quest | undefined {
     return this.quests.get(questId)
+  }
+
+  // Get quest with adjusted difficulty for a specific player
+  public getQuestWithDifficulty(questId: string, playerId: string): Quest | undefined {
+    const quest = this.quests.get(questId)
+    if (!quest) return undefined
+    
+    // Create a copy with adjusted difficulty
+    const adjustedQuest = { ...quest }
+    
+    if (this.difficultyScaling) {
+      const adjustedDifficulty = this.difficultyScaling.calculateAdjustedDifficulty(questId, playerId)
+      adjustedQuest.level = Math.round(adjustedDifficulty)
+    }
+    
+    return adjustedQuest
   }
 
   public getActiveQuests(): Quest[] {
@@ -146,6 +244,23 @@ export class QuestSystem {
     return Array.from(this.quests.values()).filter(quest => 
       !quest.isActive && !quest.isCompleted && !quest.isFailed && quest.level <= level
     )
+  }
+
+  // Get available quests with adjusted difficulties for a specific player
+  public getAvailableQuestsWithDifficulty(level: number, playerId: string): Quest[] {
+    const availableQuests = this.getAvailableQuests(level)
+    
+    if (!this.difficultyScaling) {
+      return availableQuests
+    }
+    
+    // Apply difficulty adjustments to each quest
+    return availableQuests.map(quest => {
+      const adjustedQuest = { ...quest }
+      const adjustedDifficulty = this.difficultyScaling!.calculateAdjustedDifficulty(quest.id, playerId)
+      adjustedQuest.level = Math.round(adjustedDifficulty)
+      return adjustedQuest
+    })
   }
 
   public getQuestsByType(type: QuestType): Quest[] {
@@ -313,5 +428,24 @@ export class QuestSystem {
     })
     
     return system
+  }
+
+  // Get quest difficulty factors for analysis
+  public getQuestDifficultyFactors(questId: string, playerId: string): DifficultyFactors | null {
+    if (!this.difficultyScaling) return null
+    
+    const quest = this.quests.get(questId)
+    if (!quest) return null
+    
+    // This would return the calculated difficulty factors
+    // Implementation depends on making some methods public in DifficultyScalingSystem
+    return null
+  }
+
+  // Get quest difficulty history for a player
+  public getQuestDifficultyHistory(questId: string): any[] {
+    if (!this.difficultyScaling) return []
+    
+    return this.difficultyScaling.getDifficultyAdjustments(questId)
   }
 } 

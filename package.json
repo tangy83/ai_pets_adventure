@@ -33,7 +33,7 @@
   ],
   "author": "AI Pets Adventure Team",
   "license": "MIT",
-  "type": "module",
+  "type": "commonjs",
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.3.0",

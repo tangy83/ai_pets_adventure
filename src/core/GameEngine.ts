@@ -33,7 +33,7 @@ export class GameEngine {
   private fpsCounter: number = 0
   private lastFpsUpdate: number = 0
 
-  constructor(config: GameEngineConfig = { enableSystems: ['input', 'ai', 'physics', 'rendering', 'audio'] }) {
+  constructor(config: GameEngineConfig = { enableSystems: ['input', 'ai', 'physics', 'rendering', 'audio'] }, eventManager?: EventManager) {
     this.config = {
       enableSystems: config.enableSystems,
       systemPriorities: config.systemPriorities || {},
@@ -42,7 +42,7 @@ export class GameEngine {
       enableDebugMode: config.enableDebugMode || false
     }
 
-    this.eventManager = new EventManager()
+    this.eventManager = eventManager || new EventManager()
     this.gameState = new GameState(this.eventManager)
     this.systemManager = new SystemManager(this.eventManager)
     this.timeManager = new TimeManager()

@@ -7,6 +7,9 @@ export interface AIBehavior {
   conditions: BehaviorCondition[]
   actions: AIAction[]
   isActive: boolean
+  personality: string[] // Personality traits that influence this behavior
+  cooldown: number // Cooldown period between executions
+  lastExecuted: number // Timestamp of last execution
 }
 
 export interface BehaviorCondition {
@@ -38,6 +41,54 @@ export interface LearningData {
   timestamp: number
 }
 
+// NPC System Interfaces
+export interface NPC {
+  id: string
+  name: string
+  type: 'merchant' | 'quest_giver' | 'trainer' | 'companion' | 'enemy'
+  personality: string[]
+  behaviors: AIBehavior[]
+  currentBehavior: AIBehavior | null
+  position: { x: number; y: number }
+  state: NPCState
+  interactions: NPCInteraction[]
+}
+
+export interface NPCState {
+  mood: 'happy' | 'neutral' | 'sad' | 'angry' | 'excited'
+  energy: number
+  busy: boolean
+  lastInteraction: number
+  relationshipWithPlayer: number // -100 to 100
+}
+
+export interface NPCInteraction {
+  type: 'greeting' | 'quest' | 'trade' | 'training' | 'conversation'
+  data: any
+  timestamp: number
+  success: boolean
+}
+
+// Enhanced Pet Behavior Interfaces
+export interface PetBehaviorState {
+  currentMood: 'happy' | 'curious' | 'playful' | 'tired' | 'hungry' | 'scared'
+  energyLevel: number
+  hungerLevel: number
+  socialNeed: number
+  explorationDesire: number
+  lastAction: string
+  actionCooldown: number
+}
+
+export interface BehaviorNode {
+  type: 'sequence' | 'selector' | 'action' | 'condition'
+  name: string
+  children?: BehaviorNode[]
+  action?: () => boolean
+  condition?: () => boolean
+  priority: number
+}
+
 export class AISystem extends BaseSystem {
   private behaviors: Map<string, AIBehavior> = new Map()
   private activeBehaviors: AIBehavior[] = []
@@ -47,6 +98,18 @@ export class AISystem extends BaseSystem {
   private behaviorTree: BehaviorNode | null = null
   private isLearningEnabled: boolean = true
   private config: AIConfig
+  
+  // NPC Management
+  private npcs: Map<string, NPC> = new Map()
+  private npcBehaviors: Map<string, AIBehavior[]> = new Map()
+  
+  // Enhanced Pet Behavior
+  private petBehaviorStates: Map<string, PetBehaviorState> = new Map()
+  private petPersonalities: Map<string, string[]> = new Map()
+  
+  // Behavior Tree Management
+  private behaviorTrees: Map<string, BehaviorNode> = new Map()
+  private lastBehaviorUpdate: number = 0
 
   constructor() {
     super('AISystem', 2) // Added priority 2 for AI system
@@ -58,6 +121,7 @@ export class AISystem extends BaseSystem {
       maxActiveBehaviors: 5
     }
     this.initializeDefaultBehaviors()
+    this.initializeDefaultNPCs()
   }
 
   public update(deltaTime: number): void {
@@ -72,6 +136,15 @@ export class AISystem extends BaseSystem {
     
     // Learn from recent experiences
     this.processLearning(deltaTime)
+    
+    // Update NPC behaviors
+    this.updateNPCBehaviors(deltaTime)
+    
+    // Update enhanced pet behaviors
+    this.updatePetBehaviors(deltaTime)
+    
+    // Update behavior trees
+    this.updateBehaviorTrees(deltaTime)
   }
 
   private initializeDefaultBehaviors(): void {
@@ -95,7 +168,10 @@ export class AISystem extends BaseSystem {
           priority: 1
         }
       ],
-      isActive: true
+      isActive: true,
+      personality: ['calm', 'patient'],
+      cooldown: 2000,
+      lastExecuted: 0
     })
 
     // Exploration behavior
@@ -124,7 +200,10 @@ export class AISystem extends BaseSystem {
           priority: 1
         }
       ],
-      isActive: true
+      isActive: true,
+      personality: ['curious', 'adventurous'],
+      cooldown: 5000,
+      lastExecuted: 0
     })
 
     // Player interaction behavior
@@ -153,7 +232,10 @@ export class AISystem extends BaseSystem {
           priority: 2
         }
       ],
-      isActive: true
+      isActive: true,
+      personality: ['friendly', 'social'],
+      cooldown: 3000,
+      lastExecuted: 0
     })
 
     // Puzzle solving behavior
@@ -182,8 +264,207 @@ export class AISystem extends BaseSystem {
           priority: 3
         }
       ],
-      isActive: true
+      isActive: true,
+      personality: ['intelligent', 'focused'],
+      cooldown: 8000,
+      lastExecuted: 0
     })
+
+    // Rest behavior for tired pets
+    this.addBehavior({
+      id: 'rest',
+      name: 'Rest',
+      priority: 2,
+      conditions: [
+        {
+          type: 'state',
+          data: { state: 'tired' },
+          operator: 'equals'
+        }
+      ],
+      actions: [
+        {
+          type: 'emote',
+          data: { emotion: 'tired', animation: 'sleep' },
+          duration: 10000,
+          priority: 2
+        }
+      ],
+      isActive: true,
+      personality: ['calm', 'patient'],
+      cooldown: 15000,
+      lastExecuted: 0
+    })
+
+    // Play behavior for energetic pets
+    this.addBehavior({
+      id: 'play',
+      name: 'Play',
+      priority: 4,
+      conditions: [
+        {
+          type: 'state',
+          data: { state: 'playful' },
+          operator: 'equals'
+        }
+      ],
+      actions: [
+        {
+          type: 'emote',
+          data: { emotion: 'excited', animation: 'bounce' },
+          duration: 4000,
+          priority: 3
+        },
+        {
+          type: 'move',
+          data: { direction: 'random', distance: 50 },
+          duration: 2000,
+          priority: 2
+        }
+      ],
+      isActive: true,
+      personality: ['playful', 'energetic'],
+      cooldown: 4000,
+      lastExecuted: 0
+    })
+
+    // Eat behavior for hungry pets
+    this.addBehavior({
+      id: 'eat',
+      name: 'Eat',
+      priority: 3,
+      conditions: [
+        {
+          type: 'state',
+          data: { state: 'hungry' },
+          operator: 'equals'
+        }
+      ],
+      actions: [
+        {
+          type: 'emote',
+          data: { emotion: 'hungry', animation: 'search' },
+          duration: 3000,
+          priority: 3
+        },
+        {
+          type: 'interact',
+          data: { target: 'food', action: 'consume' },
+          duration: 2000,
+          priority: 2
+        }
+      ],
+      isActive: true,
+      personality: ['survival', 'focused'],
+      cooldown: 10000,
+      lastExecuted: 0
+    })
+  }
+
+  private initializeDefaultNPCs(): void {
+    // Merchant NPC
+    const merchant: NPC = {
+      id: 'merchant_001',
+      name: 'Old Tom the Merchant',
+      type: 'merchant',
+      personality: ['friendly', 'business-minded', 'helpful'],
+      behaviors: [
+        {
+          id: 'merchant_greet',
+          name: 'Merchant Greeting',
+          priority: 3,
+          conditions: [
+            {
+              type: 'proximity',
+              data: { target: 'player', distance: 30 },
+              operator: 'less'
+            }
+          ],
+          actions: [
+            {
+              type: 'emote',
+              data: { emotion: 'friendly', animation: 'wave' },
+              duration: 2000,
+              priority: 2
+            },
+            {
+              type: 'interact',
+              data: { target: 'player', action: 'offer_trade' },
+              duration: 3000,
+              priority: 3
+            }
+          ],
+          isActive: true,
+          personality: ['friendly', 'business-minded'],
+          cooldown: 10000,
+          lastExecuted: 0
+        }
+      ],
+      currentBehavior: null,
+      position: { x: 100, y: 100 },
+      state: {
+        mood: 'happy',
+        energy: 100,
+        busy: false,
+        lastInteraction: 0,
+        relationshipWithPlayer: 50
+      },
+      interactions: []
+    }
+
+    // Quest Giver NPC
+    const questGiver: NPC = {
+      id: 'quest_giver_001',
+      name: 'Sage Elena',
+      type: 'quest_giver',
+      personality: ['wise', 'mysterious', 'helpful'],
+      behaviors: [
+        {
+          id: 'quest_offer',
+          name: 'Offer Quest',
+          priority: 4,
+          conditions: [
+            {
+              type: 'proximity',
+              data: { target: 'player', distance: 25 },
+              operator: 'less'
+            }
+          ],
+          actions: [
+            {
+              type: 'emote',
+              data: { emotion: 'wise', animation: 'ponder' },
+              duration: 2000,
+              priority: 2
+            },
+            {
+              type: 'interact',
+              data: { target: 'player', action: 'offer_quest' },
+              duration: 5000,
+              priority: 4
+            }
+          ],
+          isActive: true,
+          personality: ['wise', 'mysterious'],
+          cooldown: 15000,
+          lastExecuted: 0
+        }
+      ],
+      currentBehavior: null,
+      position: { x: 200, y: 150 },
+      state: {
+        mood: 'neutral',
+        energy: 80,
+        busy: false,
+        lastInteraction: 0,
+        relationshipWithPlayer: 30
+      },
+      interactions: []
+    }
+
+    // Add NPCs to the system
+    this.addNPC(merchant)
+    this.addNPC(questGiver)
   }
 
   private updateBehaviorTree(deltaTime: number): void {
@@ -209,7 +490,7 @@ export class AISystem extends BaseSystem {
     for (const behavior of this.behaviors.values()) {
       if (!behavior.isActive) continue
       
-      if (this.evaluateBehaviorConditions(behavior)) {
+      if (this.evaluateBehaviorConditions(behavior, {})) {
         validBehaviors.push(behavior)
       }
     }
@@ -217,61 +498,7 @@ export class AISystem extends BaseSystem {
     return validBehaviors
   }
 
-  private evaluateBehaviorConditions(behavior: AIBehavior): boolean {
-    for (const condition of behavior.conditions) {
-      if (!this.evaluateCondition(condition)) {
-        return false
-      }
-    }
-    return true
-  }
-
-  private evaluateCondition(condition: BehaviorCondition): boolean {
-    switch (condition.type) {
-      case 'proximity':
-        return this.evaluateProximityCondition(condition)
-      case 'time':
-        return this.evaluateTimeCondition(condition)
-      case 'state':
-        return this.evaluateStateCondition(condition)
-      case 'input':
-        return this.evaluateInputCondition(condition)
-      case 'memory':
-        return this.evaluateMemoryCondition(condition)
-      default:
-        return false
-    }
-  }
-
-  private evaluateProximityCondition(condition: BehaviorCondition): boolean {
-    // This would check actual game world proximity
-    // For now, return true as placeholder
-    return true
-  }
-
-  private evaluateTimeCondition(condition: BehaviorCondition): boolean {
-    // This would check time-based conditions
-    // For now, return true as placeholder
-    return true
-  }
-
-  private evaluateStateCondition(condition: BehaviorCondition): boolean {
-    // This would check game state conditions
-    // For now, return true as placeholder
-    return true
-  }
-
-  private evaluateInputCondition(condition: BehaviorCondition): boolean {
-    // This would check input-based conditions
-    // For now, return true as placeholder
-    return true
-  }
-
-  private evaluateMemoryCondition(condition: BehaviorCondition): boolean {
-    // This would check memory-based conditions
-    // For now, return true as placeholder
-    return true
-  }
+  // evaluateBehaviorConditions and evaluateCondition methods are defined below
 
   private selectBehavior(behavior: AIBehavior): void {
     if (behavior.actions.length === 0) return
@@ -498,6 +725,304 @@ export class AISystem extends BaseSystem {
   public getConfig(): AIConfig {
     return { ...this.config }
   }
+
+  // NPC Management Methods
+  public addNPC(npc: NPC): void {
+    this.npcs.set(npc.id, npc)
+    this.npcBehaviors.set(npc.id, npc.behaviors)
+    
+          if (this.eventManager) {
+        this.eventManager.emit('input', { type: 'npc_added', data: npc, timestamp: Date.now() })
+      }
+  }
+
+  public removeNPC(npcId: string): void {
+    this.npcs.delete(npcId)
+    this.npcBehaviors.delete(npcId)
+    
+          if (this.eventManager) {
+        this.eventManager.emit('input', { type: 'npc_removed', data: { npcId } })
+      }
+  }
+
+  public updateNPCBehaviors(deltaTime: number): void {
+    for (const [npcId, npc] of this.npcs) {
+      if (npc.state.busy) continue
+      
+      // Evaluate NPC behaviors based on current state
+      const validBehaviors = this.evaluateNPCBehaviors(npc)
+      
+      if (validBehaviors.length > 0) {
+        // Select behavior based on personality and current state
+        const selectedBehavior = this.selectNPCBehavior(npc, validBehaviors)
+        if (selectedBehavior) {
+          this.executeNPCBehavior(npc, selectedBehavior)
+        }
+      }
+    }
+  }
+
+  private evaluateNPCBehaviors(npc: NPC): AIBehavior[] {
+    const validBehaviors: AIBehavior[] = []
+    const now = Date.now()
+    
+    for (const behavior of npc.behaviors) {
+      if (!behavior.isActive) continue
+      if (now - behavior.lastExecuted < behavior.cooldown) continue
+      
+      // Check if behavior conditions are met
+      if (this.evaluateBehaviorConditions(behavior, npc)) {
+        validBehaviors.push(behavior)
+      }
+    }
+    
+    return validBehaviors
+  }
+
+  private selectNPCBehavior(npc: NPC, validBehaviors: AIBehavior[]): AIBehavior | null {
+    if (validBehaviors.length === 0) return null
+    
+    // Sort by priority and personality match
+    validBehaviors.sort((a, b) => {
+      const priorityDiff = b.priority - a.priority
+      if (Math.abs(priorityDiff) > 1) return priorityDiff
+      
+      // If priorities are similar, consider personality match
+      const personalityMatchA = this.calculatePersonalityMatch(a.personality, npc.personality)
+      const personalityMatchB = this.calculatePersonalityMatch(b.personality, npc.personality)
+      return personalityMatchB - personalityMatchA
+    })
+    
+    return validBehaviors[0]
+  }
+
+  private executeNPCBehavior(npc: NPC, behavior: AIBehavior): void {
+    npc.currentBehavior = behavior
+    npc.state.busy = true
+    behavior.lastExecuted = Date.now()
+    
+    // Execute the first action
+    if (behavior.actions.length > 0) {
+      this.currentAction = behavior.actions[0]
+    }
+    
+    if (this.eventManager) {
+      this.eventManager.emit('input', { type: 'npc_behavior_executed', data: { npcId: npc.id, behavior: behavior.id } })
+    }
+  }
+
+  // Enhanced Pet Behavior Methods
+  public addPetBehaviorState(petId: string, personality: string[]): void {
+    this.petPersonalities.set(petId, personality)
+    this.petBehaviorStates.set(petId, {
+      currentMood: 'happy',
+      energyLevel: 100,
+      hungerLevel: 0,
+      socialNeed: 50,
+      explorationDesire: 50,
+      lastAction: 'idle',
+      actionCooldown: 0
+    })
+  }
+
+  public updatePetBehaviors(deltaTime: number): void {
+    for (const [petId, state] of this.petBehaviorStates) {
+      // Update pet state over time
+      this.updatePetState(petId, state, deltaTime)
+      
+      // Select behavior based on current state
+      const selectedBehavior = this.selectPetBehavior(petId, state)
+      if (selectedBehavior) {
+        this.executePetBehavior(petId, selectedBehavior, state)
+      }
+    }
+  }
+
+  private updatePetState(petId: string, state: PetBehaviorState, deltaTime: number): void {
+    // Natural state changes over time
+    state.energyLevel = Math.max(0, state.energyLevel - deltaTime * 0.01) // Energy decreases over time
+    state.hungerLevel = Math.min(100, state.hungerLevel + deltaTime * 0.005) // Hunger increases over time
+    state.socialNeed = Math.min(100, state.socialNeed + deltaTime * 0.003) // Social need increases over time
+    state.explorationDesire = Math.min(100, state.explorationDesire + deltaTime * 0.002) // Exploration desire increases
+    
+    // Update mood based on state
+    state.currentMood = this.calculatePetMood(state)
+    
+    // Reduce action cooldown
+    state.actionCooldown = Math.max(0, state.actionCooldown - deltaTime)
+  }
+
+  private calculatePetMood(state: PetBehaviorState): PetBehaviorState['currentMood'] {
+    if (state.energyLevel < 20) return 'tired'
+    if (state.hungerLevel > 80) return 'hungry'
+    if (state.socialNeed > 80) return 'scared'
+    if (state.explorationDesire > 70) return 'curious'
+    if (state.energyLevel > 70 && state.hungerLevel < 30) return 'playful'
+    return 'happy'
+  }
+
+  private selectPetBehavior(petId: string, state: PetBehaviorState): AIBehavior | null {
+    const personality = this.petPersonalities.get(petId) || []
+    const validBehaviors = this.getValidPetBehaviors(state)
+    
+    if (validBehaviors.length === 0) return null
+    
+    // Sort by priority, mood match, and personality
+    validBehaviors.sort((a, b) => {
+      const priorityDiff = b.priority - a.priority
+      if (Math.abs(priorityDiff) > 2) return priorityDiff
+      
+      const moodMatchA = this.calculateMoodMatch(a, state.currentMood)
+      const moodMatchB = this.calculateMoodMatch(b, state.currentMood)
+      if (Math.abs(moodMatchA - moodMatchB) > 0.1) return moodMatchB - moodMatchA
+      
+      const personalityMatchA = this.calculatePersonalityMatch(a.personality, personality)
+      const personalityMatchB = this.calculatePersonalityMatch(b.personality, personality)
+      return personalityMatchB - personalityMatchA
+    })
+    
+    return validBehaviors[0]
+  }
+
+  private getValidPetBehaviors(state: PetBehaviorState): AIBehavior[] {
+    const validBehaviors: AIBehavior[] = []
+    const now = Date.now()
+    
+    for (const behavior of this.behaviors.values()) {
+      if (!behavior.isActive) continue
+      if (now - behavior.lastExecuted < behavior.cooldown) continue
+      
+      // Check if behavior is appropriate for current pet state
+      if (this.isBehaviorAppropriateForPetState(behavior, state)) {
+        validBehaviors.push(behavior)
+      }
+    }
+    
+    return validBehaviors
+  }
+
+  private isBehaviorAppropriateForPetState(behavior: AIBehavior, state: PetBehaviorState): boolean {
+    // Check if behavior matches current mood and state
+    if (state.currentMood === 'tired' && behavior.name.toLowerCase().includes('play')) return false
+    if (state.currentMood === 'hungry' && !behavior.name.toLowerCase().includes('eat')) return false
+    if (state.currentMood === 'scared' && behavior.name.toLowerCase().includes('explore')) return false
+    
+    return true
+  }
+
+  private executePetBehavior(petId: string, behavior: AIBehavior, state: PetBehaviorState): void {
+    if (state.actionCooldown > 0) return
+    
+    state.lastAction = behavior.name
+    state.actionCooldown = 5000 // 5 second cooldown
+    
+    // Execute the first action
+    if (behavior.actions.length > 0) {
+      this.currentAction = behavior.actions[0]
+    }
+    
+    if (this.eventManager) {
+      this.eventManager.emit('input', { type: 'pet_behavior_executed', data: { petId, behavior: behavior.id } })
+    }
+  }
+
+  // Behavior Tree Methods
+  public addBehaviorTree(id: string, tree: BehaviorNode): void {
+    this.behaviorTrees.set(id, tree)
+  }
+
+  public updateBehaviorTrees(deltaTime: number): void {
+    const now = Date.now()
+    if (now - this.lastBehaviorUpdate < this.config.behaviorUpdateInterval) return
+    
+    this.lastBehaviorUpdate = now
+    
+    for (const [id, tree] of this.behaviorTrees) {
+      this.evaluateBehaviorTree(tree)
+    }
+  }
+
+  private evaluateBehaviorTree(node: BehaviorNode): boolean {
+    switch (node.type) {
+      case 'sequence':
+        // All children must succeed
+        if (node.children) {
+          for (const child of node.children) {
+            if (!this.evaluateBehaviorTree(child)) return false
+          }
+        }
+        return true
+        
+      case 'selector':
+        // At least one child must succeed
+        if (node.children) {
+          for (const child of node.children) {
+            if (this.evaluateBehaviorTree(child)) return true
+          }
+        }
+        return false
+        
+      case 'condition':
+        return node.condition ? node.condition() : false
+        
+      case 'action':
+        return node.action ? node.action() : false
+        
+      default:
+        return false
+    }
+  }
+
+  // Utility Methods
+  private calculatePersonalityMatch(behaviorPersonality: string[], entityPersonality: string[]): number {
+    if (behaviorPersonality.length === 0 || entityPersonality.length === 0) return 0
+    
+    const matches = behaviorPersonality.filter(trait => entityPersonality.includes(trait))
+    return matches.length / Math.max(behaviorPersonality.length, entityPersonality.length)
+  }
+
+  private calculateMoodMatch(behavior: AIBehavior, mood: string): number {
+    // Simple mood matching - could be enhanced with more sophisticated logic
+    const moodKeywords = {
+      'happy': ['play', 'happy', 'content'],
+      'curious': ['explore', 'investigate', 'look'],
+      'playful': ['play', 'chase', 'fetch'],
+      'tired': ['rest', 'sleep', 'idle'],
+      'hungry': ['eat', 'search', 'hunt'],
+      'scared': ['hide', 'comfort', 'protect']
+    }
+    
+    const keywords = moodKeywords[mood as keyof typeof moodKeywords] || []
+    const behaviorName = behavior.name.toLowerCase()
+    
+    return keywords.some(keyword => behaviorName.includes(keyword)) ? 1.0 : 0.0
+  }
+
+  private evaluateBehaviorConditions(behavior: AIBehavior, context: any): boolean {
+    for (const condition of behavior.conditions) {
+      if (!this.evaluateCondition(condition, context)) return false
+    }
+    return true
+  }
+
+  private evaluateCondition(condition: BehaviorCondition, context: any): boolean {
+    // Implementation of condition evaluation
+    // This would check proximity, time, state, etc.
+    return true // Simplified for now
+  }
+
+  // Public API for external systems
+  public getNPCs(): NPC[] {
+    return Array.from(this.npcs.values())
+  }
+
+  public getPetBehaviorState(petId: string): PetBehaviorState | undefined {
+    return this.petBehaviorStates.get(petId)
+  }
+
+  public getBehaviorTrees(): Map<string, BehaviorNode> {
+    return new Map(this.behaviorTrees)
+  }
 }
 
 export interface AIConfig {
@@ -508,8 +1033,4 @@ export interface AIConfig {
   maxActiveBehaviors: number
 }
 
-interface BehaviorNode {
-  type: 'sequence' | 'selector' | 'action'
-  children?: BehaviorNode[]
-  action?: AIAction
-} 
+// BehaviorNode interface is defined above 

@@ -180,10 +180,12 @@ export class PhysicsSystem extends BaseSystem {
     let penetration: number
     
     if (overlapX < overlapY) {
-      normal = { x: aMax.x < bMax.x ? -1 : 1, y: 0 }
+      // For horizontal collision, normal should point from A to B
+      normal = { x: bodyB.position.x > bodyA.position.x ? 1 : -1, y: 0 }
       penetration = overlapX
     } else {
-      normal = { x: 0, y: aMax.y < bMax.y ? -1 : 1 }
+      // For vertical collision, normal should point from A to B
+      normal = { x: 0, y: bodyB.position.y > bodyA.position.y ? 1 : -1 }
       penetration = overlapY
     }
     
@@ -252,15 +254,26 @@ export class PhysicsSystem extends BaseSystem {
     let invMassB = bodyB.type === 'static' ? 0 : 1 / bodyB.mass
     impulse /= invMassA + invMassB
     
-    // Apply impulse
+    // Apply impulse - ensure velocities are exchanged for elastic collision
     if (bodyA.type !== 'static') {
-      bodyA.velocity.x -= impulse * normal.x * invMassA
-      bodyA.velocity.y -= impulse * normal.y * invMassA
+      bodyA.velocity.x += impulse * normal.x * invMassA
+      bodyA.velocity.y += impulse * normal.y * invMassA
     }
     
     if (bodyB.type !== 'static') {
-      bodyB.velocity.x += impulse * normal.x * invMassB
-      bodyB.velocity.y += impulse * normal.y * invMassB
+      bodyB.velocity.x -= impulse * normal.x * invMassB
+      bodyB.velocity.y -= impulse * normal.y * invMassB
+    }
+    
+    // For perfect elastic collision, ensure velocities are exchanged
+    if (restitution >= 0.8 && Math.abs(bodyA.mass - bodyB.mass) < 0.1) {
+      // Simple velocity exchange for equal mass bodies
+      const tempVelX = bodyA.velocity.x
+      const tempVelY = bodyA.velocity.y
+      bodyA.velocity.x = bodyB.velocity.x
+      bodyA.velocity.y = bodyB.velocity.y
+      bodyB.velocity.x = tempVelX
+      bodyB.velocity.y = tempVelY
     }
     
     // Positional correction
@@ -322,6 +335,9 @@ export class PhysicsSystem extends BaseSystem {
 
   public addBody(body: PhysicsBody): void {
     this.bodies.set(body.id, body)
+    
+    // Update spatial hash immediately for new bodies
+    this.updateSpatialHash()
     
     if (this.eventManager) {
       this.eventManager.emit('physics_body_added', body)

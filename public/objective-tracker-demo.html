@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Pets Adventure - Objective Tracker Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .demo-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .demo-section h2 {
+            color: #ffd700;
+            margin-top: 0;
+            border-bottom: 2px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        
+        .objective-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .objective-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .objective-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .objective-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .objective-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .status-active {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .status-completed {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .milestone-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .milestone {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .milestone.reached {
+            border-color: #ffd700;
+            background: rgba(255,215,0,0.2);
+        }
+        
+        .milestone-percentage {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .milestone-status {
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .control-button {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+        
+        .control-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+        
+        .control-button.primary {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+        
+        .control-button.warning {
+            background: #ff9800;
+            border-color: #ff9800;
+        }
+        
+        .hint-section {
+            background: rgba(255,215,0,0.1);
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .hint-title {
+            color: #ffd700;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .hint-text {
+            font-style: italic;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .stat-number {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+        
+        .location-info {
+            background: rgba(100,150,255,0.1);
+            border: 1px solid rgba(100,150,255,0.3);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .history-section {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .history-item {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9em;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            opacity: 0.7;
+        }
+        
+        .error {
+            background: rgba(255,0,0,0.2);
+            border: 1px solid rgba(255,0,0,0.5);
+            color: #ffcccc;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 AI Pets Adventure</h1>
+        <p>Objective Tracker System Demonstration</p>
+    </div>
+
+    <div id="loading" class="loading">
+        Loading Objective Tracker...
+    </div>
+
+    <div id="content" style="display: none;">
+        <div class="demo-container">
+            <div class="demo-section">
+                <h2>🎯 Active Objectives</h2>
+                <div id="objectives">
+                    <!-- Objectives will be populated here -->
+                </div>
+            </div>
+            
+            <div class="demo-section">
+                <h2>📊 Progress Statistics</h2>
+                <div id="stats" class="stats-grid">
+                    <!-- Stats will be populated here -->
+                </div>
+                
+                <h3>💡 Hint System</h3>
+                <div id="hint-display">
+                    <!-- Current hint will be shown here -->
+                </div>
+                
+                <h3>📚 Progress History</h3>
+                <div id="history-display" class="history-section">
+                    <!-- Progress history will be shown here -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>🎮 Interactive Controls</h2>
+            <div class="controls">
+                <button class="control-button primary" onclick="startQuest()">🚀 Start Quest</button>
+                <button class="control-button" onclick="updateProgress()">📈 Update Progress</button>
+                <button class="control-button" onclick="getHint()">💡 Get Hint</button>
+                <button class="control-button warning" onclick="resetObjective()">🔄 Reset Objective</button>
+                <button class="control-button" onclick="exportData()">💾 Export Data</button>
+                <button class="control-button" onclick="cleanupObjectives()">🧹 Cleanup</button>
+            </div>
+            
+            <div id="control-output">
+                <!-- Control output will be shown here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="error" class="error" style="display: none;">
+        <h3>❌ Error Loading Objective Tracker</h3>
+        <p>The ObjectiveTracker could not be loaded. This might be due to missing dependencies or initialization issues.</p>
+        <p>Please check the browser console for more details.</p>
+    </div>
+
+    <script type="module">
+        // Mock ObjectiveTracker for demonstration purposes
+        class MockObjectiveTracker {
+            constructor() {
+                this.objectives = new Map()
+                this.progress = new Map()
+                this.history = new Map()
+                this.milestones = new Map()
+                this.currentQuest = null
+                this.currentPlayer = 'demo_player'
+                this.initializeDemoData()
+            }
+
+            initializeDemoData() {
+                // Create demo objectives
+                const demoObjectives = [
+                    {
+                        id: 'explore_grove',
+                        questId: 'emerald_jungle_main',
+                        title: 'Explore the Ancient Grove',
+                        description: 'Explore the mysterious grove and uncover its secrets',
+                        type: 'explore',
+                        target: 1,
+                        current: 0,
+                        hints: [
+                            'Look for unusual rock formations',
+                            'Your pet can sense ancient magic',
+                            'Follow the ancient path',
+                            'Search for hidden symbols'
+                        ],
+                        location: { x: 100, y: 200, z: 0 }
+                    },
+                    {
+                        id: 'collect_herbs',
+                        questId: 'emerald_jungle_main',
+                        title: 'Collect Mystical Herbs',
+                        description: 'Gather mystical herbs for the temple guardian',
+                        type: 'collect',
+                        target: 3,
+                        current: 0,
+                        hints: [
+                            'Herbs grow near water sources',
+                            'Look for glowing plants',
+                            'Use your pet\'s herb sense',
+                            'Check behind waterfalls'
+                        ],
+                        location: { x: 150, y: 250, z: 0 }
+                    },
+                    {
+                        id: 'find_temple',
+                        questId: 'emerald_jungle_main',
+                        title: 'Find the Hidden Temple',
+                        description: 'Locate the entrance to the ancient temple',
+                        type: 'reach',
+                        target: 1,
+                        current: 0,
+                        hints: [
+                            'Follow the ancient path',
+                            'Look for symbols on the ground',
+                            'Your pet can sense the temple',
+                            'The entrance is well hidden'
+                        ],
+                        location: { x: 200, y: 300, z: 0 }
+                    }
+                ]
+
+                demoObjectives.forEach(obj => {
+                    this.objectives.set(obj.id, obj)
+                    this.progress.set(obj.id, {
+                        current: 0,
+                        target: obj.target,
+                        percentage: 0,
+                        isCompleted: false,
+                        timeStarted: Date.now(),
+                        timeSpent: 0,
+                        attempts: 0,
+                        lastUpdate: Date.now(),
+                        milestones: this.generateMilestones(obj),
+                        hints: [...obj.hints]
+                    })
+                    this.history.set(obj.id, [])
+                    this.milestones.set(obj.id, this.generateMilestones(obj))
+                })
+            }
+
+            generateMilestones(objective) {
+                return [
+                    {
+                        id: `${objective.id}_25`,
+                        percentage: 25,
+                        isReached: false,
+                        reward: { experience: 25, coins: 12, petBond: 6 }
+                    },
+                    {
+                        id: `${objective.id}_50`,
+                        percentage: 50,
+                        isReached: false,
+                        reward: { experience: 50, coins: 25, petBond: 12 }
+                    },
+                    {
+                        id: `${objective.id}_75`,
+                        percentage: 75,
+                        isReached: false,
+                        reward: { experience: 75, coins: 37, petBond: 18 }
+                    }
+                ]
+            }
+
+            startQuest(questId) {
+                this.currentQuest = questId
+                this.updateAllProgress()
+                return true
+            }
+
+            updateProgress(objectiveId, progress, metadata = {}) {
+                const objective = this.objectives.get(objectiveId)
+                const currentProgress = this.progress.get(objectiveId)
+                
+                if (!objective || !currentProgress) return false
+
+                const oldProgress = currentProgress.current
+                currentProgress.current = Math.min(progress, objective.target)
+                currentProgress.percentage = (currentProgress.current / objective.target) * 100
+                currentProgress.lastUpdate = Date.now()
+                currentProgress.timeSpent = Date.now() - currentProgress.timeStarted
+
+                // Update location if provided
+                if (metadata.location) {
+                    objective.location = { ...metadata.location }
+                }
+
+                // Handle attempts
+                if (metadata.attempt) {
+                    currentProgress.attempts++
+                }
+
+                // Check completion
+                if (currentProgress.current >= objective.target && !currentProgress.isCompleted) {
+                    currentProgress.isCompleted = true
+                }
+
+                // Check milestones
+                this.checkMilestones(objectiveId, oldProgress, currentProgress.current)
+
+                // Save to history
+                this.saveToHistory(objectiveId, { ...currentProgress })
+
+                return true
+            }
+
+            checkMilestones(objectiveId, oldProgress, newProgress) {
+                const milestones = this.milestones.get(objectiveId)
+                if (!milestones) return
+
+                const progress = this.progress.get(objectiveId)
+                if (!progress) return
+
+                milestones.forEach(milestone => {
+                    const oldPercentage = (oldProgress / progress.target) * 100
+                    const newPercentage = (newProgress / progress.target) * 100
+                    
+                    if (!milestone.isReached && newPercentage >= milestone.percentage) {
+                        milestone.isReached = true
+                        milestone.timeReached = Date.now()
+                    }
+                })
+            }
+
+            saveToHistory(objectiveId, progress) {
+                if (!this.history.has(objectiveId)) {
+                    this.history.set(objectiveId, [])
+                }
+                
+                const history = this.history.get(objectiveId)
+                history.push({ ...progress, timestamp: Date.now() })
+                
+                // Keep only last 10 entries
+                if (history.length > 10) {
+                    history.splice(0, history.length - 10)
+                }
+            }
+
+            getObjectiveProgress(objectiveId) {
+                return this.progress.get(objectiveId)
+            }
+
+            getAllObjectives() {
+                return Array.from(this.objectives.values())
+            }
+
+            getProgressForQuest(questId) {
+                return Array.from(this.progress.entries())
+                    .filter(([id, progress]) => {
+                        const objective = this.objectives.get(id)
+                        return objective && objective.questId === questId
+                    })
+                    .map(([id, progress]) => ({
+                        objectiveId: id,
+                        ...progress,
+                        ...this.objectives.get(id)
+                    }))
+            }
+
+            getHint(objectiveId) {
+                const objective = this.objectives.get(objectiveId)
+                const progress = this.progress.get(objectiveId)
+                
+                if (!objective || !progress || objective.hints.length === 0) {
+                    return null
+                }
+
+                const hintIndex = Math.floor(progress.percentage / 25)
+                if (hintIndex >= objective.hints.length) {
+                    return objective.hints[objective.hints.length - 1]
+                }
+
+                return objective.hints[hintIndex]
+            }
+
+            resetObjective(objectiveId) {
+                const progress = this.progress.get(objectiveId)
+                if (!progress) return false
+
+                progress.current = 0
+                progress.percentage = 0
+                progress.isCompleted = false
+                progress.timeStarted = Date.now()
+                progress.timeSpent = 0
+                progress.attempts = 0
+                progress.lastUpdate = Date.now()
+
+                // Reset milestones
+                const milestones = this.milestones.get(objectiveId)
+                if (milestones) {
+                    milestones.forEach(milestone => {
+                        milestone.isReached = false
+                        milestone.timeReached = undefined
+                    })
+                }
+
+                return true
+            }
+
+            getStatistics() {
+                const objectives = Array.from(this.progress.values())
+                const completed = objectives.filter(obj => obj.isCompleted)
+                const active = objectives.filter(obj => !obj.isCompleted)
+                
+                const totalCompletionTime = completed.reduce((sum, obj) => {
+                    return sum + obj.timeSpent
+                }, 0)
+                
+                const averageCompletionTime = completed.length > 0 
+                    ? totalCompletionTime / completed.length 
+                    : 0
+
+                const totalAttempts = objectives.reduce((sum, obj) => sum + obj.attempts, 0)
+
+                return {
+                    totalObjectives: objectives.length,
+                    completedObjectives: completed.length,
+                    activeObjectives: active.length,
+                    averageCompletionTime,
+                    totalAttempts
+                }
+            }
+
+            exportData() {
+                return {
+                    objectives: Array.from(this.progress.values()),
+                    history: Array.from(this.history.entries()),
+                    milestones: Array.from(this.milestones.entries())
+                }
+            }
+
+            cleanupObjectives() {
+                const now = Date.now()
+                const maxAge = 24 * 60 * 60 * 1000 // 24 hours
+                
+                let cleanedCount = 0
+                
+                this.progress.forEach((progress, objectiveId) => {
+                    if (progress.isCompleted && progress.timeSpent > maxAge) {
+                        this.progress.delete(objectiveId)
+                        this.history.delete(objectiveId)
+                        this.milestones.delete(objectiveId)
+                        cleanedCount++
+                    }
+                })
+                
+                return cleanedCount
+            }
+
+            updateAllProgress() {
+                const now = Date.now()
+                this.progress.forEach(progress => {
+                    if (!progress.isCompleted) {
+                        progress.timeSpent = now - progress.timeStarted
+                    }
+                })
+            }
+        }
+
+        // Initialize the demo
+        let objectiveTracker
+        let currentObjectiveIndex = 0
+
+        function initializeDemo() {
+            try {
+                objectiveTracker = new MockObjectiveTracker()
+                
+                // Hide loading, show content
+                document.getElementById('loading').style.display = 'none'
+                document.getElementById('content').style.display = 'block'
+                
+                // Start with a quest
+                objectiveTracker.startQuest('emerald_jungle_main')
+                
+                // Populate objectives
+                populateObjectives()
+                
+                // Populate statistics
+                populateStats()
+                
+                // Setup periodic updates
+                setInterval(() => {
+                    objectiveTracker.updateAllProgress()
+                    populateStats()
+                }, 1000)
+                
+            } catch (error) {
+                console.error('Error initializing demo:', error)
+                document.getElementById('loading').style.display = 'none'
+                document.getElementById('error').style.display = 'block'
+            }
+        }
+
+        function populateObjectives() {
+            const objectivesContainer = document.getElementById('objectives')
+            const objectives = objectiveTracker.getProgressForQuest('emerald_jungle_main')
+            
+            objectivesContainer.innerHTML = objectives.map(obj => `
+                <div class="objective-card">
+                    <div class="objective-header">
+                        <div class="objective-title">${obj.title}</div>
+                        <div class="objective-status ${obj.isCompleted ? 'status-completed' : 'status-active'}">
+                            ${obj.isCompleted ? 'Completed' : 'Active'}
+                        </div>
+                    </div>
+                    
+                    <div class="objective-description">${obj.description}</div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${obj.percentage}%"></div>
+                        <div class="progress-text">${obj.current}/${obj.target} (${Math.round(obj.percentage)}%)</div>
+                    </div>
+                    
+                    <div class="milestone-grid">
+                        ${obj.milestones.map(milestone => `
+                            <div class="milestone ${milestone.isReached ? 'reached' : ''}">
+                                <div class="milestone-percentage">${milestone.percentage}%</div>
+                                <div class="milestone-status">${milestone.isReached ? '✅ Reached' : '⏳ Pending'}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    ${obj.location ? `
+                        <div class="location-info">
+                            📍 Location: (${obj.location.x}, ${obj.location.y}, ${obj.location.z})
+                        </div>
+                    ` : ''}
+                    
+                    <div class="controls">
+                        <button class="control-button" onclick="updateSpecificProgress('${obj.objectiveId}', ${obj.target})">
+                            Complete
+                        </button>
+                        <button class="control-button" onclick="updateSpecificProgress('${obj.objectiveId}', ${Math.min(obj.current + 1, obj.target)})">
+                            +1 Progress
+                        </button>
+                        <button class="control-button warning" onclick="resetSpecificObjective('${obj.objectiveId}')">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            `).join('')
+        }
+
+        function populateStats() {
+            const statsContainer = document.getElementById('stats')
+            const stats = objectiveTracker.getStatistics()
+            
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalObjectives}</div>
+                    <div class="stat-label">Total Objectives</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.completedObjectives}</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.activeObjectives}</div>
+                    <div class="stat-label">Active</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalAttempts}</div>
+                    <div class="stat-label">Total Attempts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${Math.round(stats.averageCompletionTime / 1000)}s</div>
+                    <div class="stat-label">Avg Time</div>
+                </div>
+            `
+        }
+
+        // Global functions for controls
+        window.startQuest = function() {
+            objectiveTracker.startQuest('emerald_jungle_main')
+            populateObjectives()
+            updateControlOutput('🚀 Quest started: Emerald Jungle Main Quest')
+        }
+
+        window.updateProgress = function() {
+            const objectives = objectiveTracker.getAllObjectives()
+            if (objectives.length === 0) return
+            
+            const objective = objectives[currentObjectiveIndex % objectives.length]
+            const currentProgress = objectiveTracker.getObjectiveProgress(objective.id)
+            
+            if (currentProgress && !currentProgress.isCompleted) {
+                const newProgress = Math.min(currentProgress.current + 1, objective.target)
+                objectiveTracker.updateProgress(objective.id, newProgress, { attempt: true })
+                
+                updateControlOutput(`📈 Updated ${objective.title}: ${newProgress}/${objective.target}`)
+                populateObjectives()
+                populateStats()
+            }
+            
+            currentObjectiveIndex++
+        }
+
+        window.updateSpecificProgress = function(objectiveId, progress) {
+            objectiveTracker.updateProgress(objectiveId, progress, { attempt: true })
+            updateControlOutput(`📈 Updated objective ${objectiveId}: ${progress}`)
+            populateObjectives()
+            populateStats()
+        }
+
+        window.getHint = function() {
+            const objectives = objectiveTracker.getAllObjectives()
+            if (objectives.length === 0) return
+            
+            const objective = objectives[Math.floor(Math.random() * objectives.length)]
+            const hint = objectiveTracker.getHint(objective.id)
+            
+            if (hint) {
+                document.getElementById('hint-display').innerHTML = `
+                    <div class="hint-section">
+                        <div class="hint-title">💡 Hint for: ${objective.title}</div>
+                        <div class="hint-text">"${hint}"</div>
+                    </div>
+                `
+                updateControlOutput(`💡 Got hint for ${objective.title}`)
+            } else {
+                updateControlOutput(`❌ No hint available for ${objective.title}`)
+            }
+        }
+
+        window.resetObjective = function() {
+            const objectives = objectiveTracker.getAllObjectives()
+            if (objectives.length === 0) return
+            
+            const objective = objectives[Math.floor(Math.random() * objectives.length)]
+            const success = objectiveTracker.resetObjective(objective.id)
+            
+            if (success) {
+                updateControlOutput(`🔄 Reset objective: ${objective.title}`)
+                populateObjectives()
+                populateStats()
+            } else {
+                updateControlOutput(`❌ Failed to reset objective: ${objective.title}`)
+            }
+        }
+
+        window.resetSpecificObjective = function(objectiveId) {
+            const success = objectiveTracker.resetObjective(objectiveId)
+            
+            if (success) {
+                updateControlOutput(`🔄 Reset objective: ${objectiveId}`)
+                populateObjectives()
+                populateStats()
+            } else {
+                updateControlOutput(`❌ Failed to reset objective: ${objectiveId}`)
+            }
+        }
+
+        window.exportData = function() {
+            const data = objectiveTracker.exportData()
+            updateControlOutput(`💾 Exported data: ${data.objectives.length} objectives, ${data.history.length} history entries`)
+            
+            // Show history
+            if (data.history.length > 0) {
+                const historyContainer = document.getElementById('history-display')
+                const firstHistory = data.history[0]
+                if (firstHistory && firstHistory[1].length > 0) {
+                    historyContainer.innerHTML = firstHistory[1].map(entry => `
+                        <div class="history-item">
+                            ${entry.current}/${entry.target} (${Math.round(entry.percentage)}%) - ${new Date(entry.timestamp).toLocaleTimeString()}
+                        </div>
+                    `).join('')
+                }
+            }
+        }
+
+        window.cleanupObjectives = function() {
+            const cleanedCount = objectiveTracker.cleanupObjectives()
+            updateControlOutput(`🧹 Cleaned up ${cleanedCount} objectives`)
+            populateObjectives()
+            populateStats()
+        }
+
+        function updateControlOutput(message) {
+            const output = document.getElementById('control-output')
+            const timestamp = new Date().toLocaleTimeString()
+            output.innerHTML = `<div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px;">
+                <strong>${timestamp}:</strong> ${message}
+            </div>` + output.innerHTML
+            
+            // Keep only last 5 messages
+            const messages = output.children
+            if (messages.length > 5) {
+                for (let i = 5; i < messages.length; i++) {
+                    messages[i].remove()
+                }
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeDemo)
+    </script>
+</body>
+</html>
+
+
+
