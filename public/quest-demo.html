@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Pets Adventure - Quest Manager Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .demo-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .demo-section h2 {
+            color: #ffd700;
+            margin-top: 0;
+            border-bottom: 2px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        
+        .quest-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .quest-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .quest-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .quest-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        .quest-type {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+        }
+        
+        .quest-difficulty {
+            display: inline-block;
+            background: #ff9800;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        
+        .quest-description {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .quest-objectives {
+            margin-bottom: 15px;
+        }
+        
+        .quest-objectives h4 {
+            color: #ffd700;
+            margin-bottom: 8px;
+        }
+        
+        .objective-item {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        
+        .quest-rewards {
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 15px;
+        }
+        
+        .quest-rewards h4 {
+            color: #ffd700;
+            margin-bottom: 8px;
+        }
+        
+        .reward-item {
+            display: inline-block;
+            background: rgba(255,215,0,0.2);
+            color: #ffd700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin: 2px;
+            font-size: 0.8em;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .filter-button {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .filter-button.active {
+            background: #ffd700;
+            color: #333;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            opacity: 0.7;
+        }
+        
+        .error {
+            background: rgba(255,0,0,0.2);
+            border: 1px solid rgba(255,0,0,0.5);
+            color: #ffcccc;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎮 AI Pets Adventure</h1>
+        <p>Quest Manager System Demonstration</p>
+    </div>
+
+    <div id="loading" class="loading">
+        Loading Quest Manager...
+    </div>
+
+    <div id="content" style="display: none;">
+        <div class="demo-section">
+            <h2>📊 Quest System Statistics</h2>
+            <div id="stats" class="stats-grid">
+                <!-- Stats will be populated here -->
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🔍 Quest Filtering</h2>
+            <div class="filter-section">
+                <button class="filter-button active" data-filter="all">All Quests</button>
+                <button class="filter-button" data-filter="story">Story</button>
+                <button class="filter-button" data-filter="side">Side</button>
+                <button class="filter-button" data-filter="daily">Daily</button>
+                <button class="filter-button" data-filter="weekly">Weekly</button>
+                <button class="filter-button" data-filter="challenge">Challenge</button>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🎯 Available Quests</h2>
+            <div id="quests" class="quest-grid">
+                <!-- Quests will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="error" class="error" style="display: none;">
+        <h3>❌ Error Loading Quest Manager</h3>
+        <p>The QuestManager could not be loaded. This might be due to missing dependencies or initialization issues.</p>
+        <p>Please check the browser console for more details.</p>
+    </div>
+
+    <script type="module">
+        // Mock QuestManager for demonstration purposes
+        class MockQuestManager {
+            constructor() {
+                this.quests = this.initializeQuests();
+            }
+
+            initializeQuests() {
+                return [
+                    {
+                        id: 'emerald_jungle_main',
+                        title: 'The Ancient Grove Mystery',
+                        description: 'Explore the mysterious grove and uncover the secrets of the ancient temple.',
+                        type: 'story',
+                        category: 'main',
+                        baseDifficulty: 'easy',
+                        requiredLevel: 1,
+                        requiredPetBond: 10,
+                        objectives: [
+                            { id: 'explore_grove', type: 'explore', description: 'Explore the ancient grove', count: 1 },
+                            { id: 'collect_herbs', type: 'collect', description: 'Collect mystical herbs', count: 3 },
+                            { id: 'find_temple', type: 'reach', description: 'Find the hidden temple entrance', count: 1 }
+                        ],
+                        rewards: {
+                            experience: 100,
+                            coins: 50,
+                            items: ['ancient_key', 'grove_map'],
+                            skills: ['herb_lore', 'ancient_knowledge'],
+                            petBond: 25,
+                            unlockables: ['temple_access', 'grove_mastery'],
+                            reputation: 100,
+                            specialRewards: [
+                                {
+                                    type: 'pet_companion',
+                                    id: 'grove_spirit',
+                                    name: 'Grove Spirit Companion',
+                                    description: 'A mystical companion that enhances your connection to nature',
+                                    rarity: 'rare'
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        id: 'crystal_caverns_side',
+                        title: 'Crystal Collector',
+                        description: 'Help the crystal merchant collect rare crystals from the depths.',
+                        type: 'side',
+                        category: 'side',
+                        baseDifficulty: 'medium',
+                        requiredLevel: 3,
+                        requiredPetBond: 20,
+                        objectives: [
+                            { id: 'collect_crystals', type: 'collect', description: 'Collect rare crystals', count: 5 }
+                        ],
+                        rewards: {
+                            experience: 75,
+                            coins: 40,
+                            items: ['crystal_pickaxe', 'cavern_map'],
+                            skills: ['crystal_lore'],
+                            petBond: 15,
+                            unlockables: ['crystal_merchant_friendship'],
+                            reputation: 50,
+                            specialRewards: []
+                        }
+                    },
+                    {
+                        id: 'daily_pet_training',
+                        title: 'Daily Pet Training',
+                        description: 'Train your pet to improve their skills and bond.',
+                        type: 'daily',
+                        category: 'daily',
+                        baseDifficulty: 'easy',
+                        requiredLevel: 1,
+                        requiredPetBond: 5,
+                        objectives: [
+                            { id: 'train_pet', type: 'interact', description: 'Complete pet training exercises', count: 3 }
+                        ],
+                        rewards: {
+                            experience: 50,
+                            coins: 25,
+                            items: ['training_treats', 'skill_manual'],
+                            skills: ['pet_training', 'bond_enhancement'],
+                            petBond: 20,
+                            unlockables: ['daily_training_mastery'],
+                            reputation: 25,
+                            specialRewards: []
+                        }
+                    },
+                    {
+                        id: 'weekly_treasure_hunt',
+                        title: 'Weekly Treasure Hunt',
+                        description: 'Embark on a weekly adventure to find hidden treasures across the world.',
+                        type: 'weekly',
+                        category: 'weekly',
+                        baseDifficulty: 'medium',
+                        requiredLevel: 5,
+                        requiredPetBond: 25,
+                        objectives: [
+                            { id: 'find_treasures', type: 'collect', description: 'Find hidden treasures', count: 7 },
+                            { id: 'solve_riddles', type: 'solve', description: 'Solve treasure map riddles', count: 3 }
+                        ],
+                        rewards: {
+                            experience: 200,
+                            coins: 100,
+                            items: ['treasure_map', 'golden_compass', 'rare_gem'],
+                            skills: ['treasure_hunting', 'riddle_solving', 'exploration'],
+                            petBond: 35,
+                            unlockables: ['treasure_hunter_title', 'weekly_hunter_badge'],
+                            reputation: 75,
+                            specialRewards: [
+                                {
+                                    type: 'unique_item',
+                                    id: 'treasure_hunter_medallion',
+                                    name: 'Treasure Hunter Medallion',
+                                    description: 'A prestigious medallion that increases treasure find chances',
+                                    rarity: 'epic'
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        id: 'challenge_arena_champion',
+                        title: 'Pet Arena Champion',
+                        description: 'Prove your pet\'s strength in the competitive arena.',
+                        type: 'challenge',
+                        category: 'achievement',
+                        baseDifficulty: 'hard',
+                        requiredLevel: 8,
+                        requiredPetBond: 40,
+                        objectives: [
+                            { id: 'win_battles', type: 'defeat', description: 'Win arena battles', count: 10 },
+                            { id: 'reach_final', type: 'reach', description: 'Reach the arena finals', count: 1 }
+                        ],
+                        rewards: {
+                            experience: 500,
+                            coins: 250,
+                            items: ['champion_crown', 'arena_trophy', 'victory_banner'],
+                            skills: ['combat_strategy', 'arena_mastery', 'championship_tactics'],
+                            petBond: 75,
+                            unlockables: ['arena_champion_title', 'champion_arena_access'],
+                            reputation: 200,
+                            specialRewards: [
+                                {
+                                    type: 'pet_companion',
+                                    id: 'arena_champion_pet',
+                                    name: 'Arena Champion Pet',
+                                    description: 'A legendary pet companion with enhanced combat abilities',
+                                    rarity: 'legendary'
+                                }
+                            ]
+                        }
+                    }
+                ];
+            }
+
+            getQuestStatistics() {
+                return {
+                    totalQuests: this.quests.length,
+                    activeQuests: 0,
+                    completedQuests: 0,
+                    failedQuests: 0,
+                    totalExperience: this.quests.reduce((sum, q) => sum + q.rewards.experience, 0),
+                    totalCoins: this.quests.reduce((sum, q) => sum + q.rewards.coins, 0),
+                    totalItems: this.quests.reduce((sum, q) => sum + q.rewards.items.length, 0),
+                    averageCompletionTime: 0,
+                    questsByType: new Map(),
+                    questsByCategory: new Map(),
+                    questsByDifficulty: new Map()
+                };
+            }
+
+            getAvailableQuests() {
+                return this.quests;
+            }
+
+            getQuestsByFilter(filter) {
+                return this.quests.filter(quest => {
+                    if (filter.type && quest.type !== filter.type) return false;
+                    if (filter.category && quest.category !== filter.category) return false;
+                    if (filter.difficulty && quest.baseDifficulty !== filter.difficulty) return false;
+                    return true;
+                });
+            }
+        }
+
+        // Initialize the demo
+        function initializeDemo() {
+            try {
+                const questManager = new MockQuestManager();
+                
+                // Hide loading, show content
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                
+                // Populate statistics
+                populateStats(questManager);
+                
+                // Populate quests
+                populateQuests(questManager);
+                
+                // Setup filtering
+                setupFiltering(questManager);
+                
+            } catch (error) {
+                console.error('Error initializing demo:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        function populateStats(questManager) {
+            const stats = questManager.getQuestStatistics();
+            const statsContainer = document.getElementById('stats');
+            
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalQuests}</div>
+                    <div class="stat-label">Total Quests</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalExperience}</div>
+                    <div class="stat-label">Total Experience</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalCoins}</div>
+                    <div class="stat-label">Total Coins</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalItems}</div>
+                    <div class="stat-label">Total Items</div>
+                </div>
+            `;
+        }
+
+        function populateQuests(questManager, filter = {}) {
+            const quests = filter.type ? questManager.getQuestsByFilter(filter) : questManager.getAvailableQuests();
+            const questsContainer = document.getElementById('quests');
+            
+            questsContainer.innerHTML = quests.map(quest => `
+                <div class="quest-card">
+                    <div class="quest-title">${quest.title}</div>
+                    <div>
+                        <span class="quest-type">${quest.type}</span>
+                        <span class="quest-difficulty">${quest.baseDifficulty}</span>
+                    </div>
+                    <div class="quest-description">${quest.description}</div>
+                    
+                    <div class="quest-objectives">
+                        <h4>🎯 Objectives (${quest.objectives.length})</h4>
+                        ${quest.objectives.map(obj => `
+                            <div class="objective-item">${obj.description} (${obj.count})</div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="quest-rewards">
+                        <h4>🏆 Rewards</h4>
+                        <div class="reward-item">${quest.rewards.experience} XP</div>
+                        <div class="reward-item">${quest.rewards.coins} Coins</div>
+                        <div class="reward-item">${quest.rewards.petBond} Pet Bond</div>
+                        ${quest.rewards.skills.map(skill => `<div class="reward-item">${skill}</div>`).join('')}
+                        ${quest.rewards.specialRewards.length > 0 ? 
+                            `<div class="reward-item">${quest.rewards.specialRewards.length} Special</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setupFiltering(questManager) {
+            const filterButtons = document.querySelectorAll('.filter-button');
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    // Add active class to clicked button
+                    button.classList.add('active');
+                    
+                    const filter = button.dataset.filter;
+                    if (filter === 'all') {
+                        populateQuests(questManager);
+                    } else {
+                        populateQuests(questManager, { type: filter });
+                    }
+                });
+            });
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeDemo);
+    </script>
+</body>
+</html>
+
+
+

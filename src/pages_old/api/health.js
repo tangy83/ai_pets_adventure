@@ -1,28 +1,10 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-
-type HealthStatus = {
-  status: 'healthy' | 'unhealthy'
-  timestamp: string
-  uptime: number
-  memory: {
-    used: number
-    total: number
-    free: number
-  }
-  version: string
-  environment: string
-}
-
-export default function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<HealthStatus>
-) {
+export default function handler(req, res) {
   // Get memory usage
   const memUsage = process.memoryUsage()
   const totalMem = require('os').totalmem()
   const freeMem = require('os').freemem()
   
-  const healthStatus: HealthStatus = {
+  const healthStatus = {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
@@ -41,4 +23,5 @@ export default function handler(
   res.setHeader('Expires', '0')
 
   res.status(200).json(healthStatus)
-} 
+}
+

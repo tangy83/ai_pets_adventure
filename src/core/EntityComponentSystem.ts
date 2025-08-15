@@ -427,7 +427,7 @@ export class EntityManager {
     }
     
     this.entities.set(id, entity)
-    this.eventManager.emit('entityCreated', { entityId: id, name, tags })
+    this.eventManager.emit('entityCreated', { entityId: id, name, tags, timestamp: Date.now() })
     
     return entity
   }
@@ -440,7 +440,7 @@ export class EntityManager {
     entity.components.clear()
     this.entities.delete(entityId)
     
-    this.eventManager.emit('entityDestroyed', { entityId })
+    this.eventManager.emit('entityDestroyed', { entityId, timestamp: Date.now() })
     return true
   }
 
@@ -469,7 +469,7 @@ export class EntityManager {
     if (!entity) return false
 
     entity.components.set(component.type, component)
-    this.eventManager.emit('componentAdded', { entityId, componentType: component.type })
+    this.eventManager.emit('componentAdded', { entityId, componentType: component.type, timestamp: Date.now() })
     return true
   }
 
@@ -479,7 +479,7 @@ export class EntityManager {
 
     const removed = entity.components.delete(componentType)
     if (removed) {
-      this.eventManager.emit('componentRemoved', { entityId, componentType })
+      this.eventManager.emit('componentRemoved', { entityId, componentType, timestamp: Date.now() })
     }
     return removed
   }
@@ -534,7 +534,7 @@ export class ECSSystemManager {
       system.initialize()
     }
 
-    this.eventManager.emit('systemAdded', { systemName: system.name })
+    this.eventManager.emit('systemAdded', { systemName: system.name, timestamp: Date.now() })
   }
 
   public removeSystem(systemName: string): boolean {
@@ -548,7 +548,7 @@ export class ECSSystemManager {
     this.systems.delete(systemName)
     this.rebuildSystemOrder()
     
-    this.eventManager.emit('systemRemoved', { systemName })
+    this.eventManager.emit('systemRemoved', { systemName, timestamp: Date.now() })
     return true
   }
 
@@ -571,7 +571,7 @@ export class ECSSystemManager {
       } catch (error) {
         console.error(`Error updating system ${systemName}:`, error)
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-        this.eventManager.emit('systemError', { systemName, error: errorMessage })
+        this.eventManager.emit('systemError', { systemName, error: errorMessage, timestamp: Date.now() })
       }
     }
   }

@@ -1,5 +1,5 @@
 # AI Pets Adventure - Docker Makefile
-.PHONY: help build dev prod test clean logs shell health
+.PHONY: help build dev prod test clean logs shell health test-rewards test-performance
 
 # Default target
 help:
@@ -17,6 +17,8 @@ help:
 	@echo "Testing:"
 	@echo "  make test         - Run tests in Docker"
 	@echo "  make test-build   - Build and run tests"
+	@echo "  make test-rewards - Test Reward Calculator functionality"
+	@echo "  make test-performance - Run performance benchmarks"
 	@echo "  make demo         - Run comprehensive Docker demo"
 	@echo ""
 	@echo "Management:"
@@ -41,7 +43,7 @@ dev-build:
 
 # Production environment
 prod:
-	docker-compose --profile prod up -d
+	docker-compose --profile prod up --build -d
 
 prod-build:
 	docker-compose --profile prod up --build -d
@@ -52,6 +54,28 @@ test:
 
 test-build:
 	docker-compose --profile test up --build
+
+# Test Reward Calculator functionality
+test-rewards:
+	@echo "🧪 Testing Reward Calculator functionality..."
+	@echo "Starting development environment..."
+	@make dev
+	@echo "Waiting for services to start..."
+	@sleep 10
+	@echo "Testing Reward Calculator..."
+	@curl -s http://localhost:3000/test-rewards | grep -q "Reward Calculator" && echo "✅ Test page accessible" || echo "❌ Test page not accessible"
+	@echo ""
+	@echo "🌐 Open http://localhost:3000/test-rewards in your browser"
+	@echo "📊 Run the performance tests to see real metrics"
+
+# Test Reward Calculator performance
+test-performance:
+	@echo "🚀 Testing Reward Calculator Performance..."
+	@echo "Running performance benchmarks..."
+	@node test-rewards-performance.js
+	@echo ""
+	@echo "💡 For detailed memory analysis, run:"
+	@echo "   node --expose-gc test-rewards-performance.js"
 
 # Demo all environments
 demo:
@@ -101,52 +125,32 @@ build-local:
 start-local:
 	npm run dev
 
-# Docker image management
-images:
-	docker images | grep ai-pets
-
-# Container status
-status:
-	docker-compose ps
-
-# Restart services
-restart:
-	docker-compose restart
-
-# Update images
-update:
-	docker-compose pull
-	docker-compose build --no-cache
-
-# Backup volumes
-backup:
-	@echo "Creating backup of volumes..."
-	@mkdir -p backups/$(shell date +%Y%m%d_%H%M%S)
-	@docker run --rm -v ai_pets_adventure_redis-data:/data -v $(PWD)/backups/$(shell date +%Y%m%d_%H%M%S):/backup alpine tar czf /backup/redis-data.tar.gz -C /data .
-	@docker run --rm -v ai_pets_adventure_postgres-data:/data -v $(PWD)/backups/$(shell date +%Y%m%d_%H%M%S):/backup alpine tar czf /backup/postgres-data.tar.gz -C /data .
-	@echo "Backup completed in backups/$(shell date +%Y%m%d_%H%M%S)/"
-
-# Performance monitoring
-monitor:
-	@echo "Container resource usage:"
-	@docker stats --no-stream
+# Test Reward Calculator locally
+test-rewards-local:
+	@echo "🧪 Testing Reward Calculator locally..."
+	@echo "Starting local development server..."
+	@npm run dev &
+	@echo "Waiting for server to start..."
+	@sleep 15
+	@echo "Testing Reward Calculator..."
+	@curl -s http://localhost:3000/test-rewards | grep -q "Reward Calculator" && echo "✅ Test page accessible" || echo "❌ Test page not accessible"
 	@echo ""
-	@echo "Disk usage:"
-	@docker system df
+	@echo "🌐 Open http://localhost:3000/test-rewards in your browser"
+	@echo "📊 Run the performance tests to see real metrics"
 	@echo ""
-	@echo "Network usage:"
-	@docker network ls
+	@echo "Press Ctrl+C to stop the local server"
 
-# Security scan
-security-scan:
-	@echo "Scanning for vulnerabilities..."
-	@docker scan ai-pets-adventure:latest || echo "Docker scan not available. Install Docker Scout or use Trivy."
-
-# Quick development cycle
-dev-cycle: dev-build logs
-
-# Quick production cycle
-prod-cycle: prod-build logs
-
-# Quick test cycle
-test-cycle: test-build 
+# Quick performance test
+quick-performance:
+	@echo "⚡ Quick Performance Test..."
+	@node -e "
+	const start = performance.now();
+	for(let i = 0; i < 10000; i++) {
+		const base = Math.random() * 1000;
+		const multiplier = 1.0 + Math.random() * 2.0;
+		const result = base * multiplier;
+	}
+	const end = performance.now();
+	console.log(\`✅ 10,000 calculations: \${(end - start).toFixed(2)}ms\`);
+	console.log(\`📈 Average: \${((end - start) / 10000).toFixed(3)}ms per calculation\`);
+	" 

@@ -76,7 +76,7 @@ export class NetworkManager {
     window.addEventListener('offline', this.handleOffline.bind(this))
 
     // Listen for network information changes
-    if ('connection' in navigator) {
+    if ('connection' in navigator && (navigator as any).connection) {
       const connection = (navigator as any).connection
       connection.addEventListener('change', this.handleNetworkChange.bind(this))
       this.updateNetworkStatus()
@@ -139,7 +139,7 @@ export class NetworkManager {
   }
 
   private updateNetworkStatus(): void {
-    if ('connection' in navigator) {
+    if ('connection' in navigator && (navigator as any).connection) {
       const connection = (navigator as any).connection
       this.networkStatus = {
         isOnline: this.isOnline,

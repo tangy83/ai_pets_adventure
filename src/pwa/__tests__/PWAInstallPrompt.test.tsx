@@ -62,10 +62,10 @@ describe('PWAInstallPrompt', () => {
   test('should show install prompt when beforeinstallprompt fires', async () => {
     const { getByText } = render(<PWAInstallPrompt />)
     
-    // Wait for component to mount and set up event listeners
+    // Wait for component to mount and set up event listeners with shorter timeout
     await waitFor(() => {
       expect(mockAddEventListener).toHaveBeenCalledWith('beforeinstallprompt', expect.any(Function))
-    })
+    }, { timeout: 1000 })
     
     // Simulate the beforeinstallprompt event
     if (beforeInstallCallback) {
@@ -90,10 +90,10 @@ describe('PWAInstallPrompt', () => {
     const onInstall = jest.fn()
     const { getByText } = render(<PWAInstallPrompt onInstall={onInstall} />)
     
-    // Wait for component to mount and set up event listeners
+    // Wait for component to mount and set up event listeners with shorter timeout
     await waitFor(() => {
       expect(mockAddEventListener).toHaveBeenCalledWith('beforeinstallprompt', expect.any(Function))
-    })
+    }, { timeout: 1000 })
     
     // Simulate the beforeinstallprompt event
     if (beforeInstallCallback) {
@@ -109,7 +109,7 @@ describe('PWAInstallPrompt', () => {
     
     await waitFor(() => {
       expect(onInstall).toHaveBeenCalled()
-    })
+    }, { timeout: 1000 })
   })
 
   test('should handle install prompt dismissal', async () => {
@@ -123,10 +123,10 @@ describe('PWAInstallPrompt', () => {
     const onDismiss = jest.fn()
     const { getByText } = render(<PWAInstallPrompt onDismiss={onDismiss} />)
     
-    // Wait for component to mount and set up event listeners
+    // Wait for component to mount and set up event listeners with shorter timeout
     await waitFor(() => {
       expect(mockAddEventListener).toHaveBeenCalledWith('beforeinstallprompt', expect.any(Function))
-    })
+    }, { timeout: 1000 })
     
     // Simulate the beforeinstallprompt event
     if (beforeInstallCallback) {
@@ -142,7 +142,7 @@ describe('PWAInstallPrompt', () => {
     
     await waitFor(() => {
       expect(onDismiss).toHaveBeenCalled()
-    })
+    }, { timeout: 1000 })
   })
 
   test('should handle manual dismiss', async () => {

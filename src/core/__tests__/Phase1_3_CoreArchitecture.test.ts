@@ -3,8 +3,8 @@ import { GameState } from '../GameState'
 import { EventManager } from '../EventManager'
 import { PerformanceMonitor } from '../PerformanceMonitor'
 import { ErrorBoundary } from '../ErrorBoundary'
+import { PositionComponent, RenderableComponent, EntityManager } from '../EntityComponentSystem'
 import { ComponentRegistry } from '../ComponentRegistry'
-import { EntityComponentSystem, PositionComponent, RenderableComponent } from '../EntityComponentSystem'
 
 describe('Phase 1.3: Core Systems Architecture', () => {
   let eventManager: EventManager
@@ -114,8 +114,9 @@ describe('Phase 1.3: Core Systems Architecture', () => {
       const component = componentRegistry.createComponent('position', 'entity_1', 10, 20, 0)
       expect(component).toBeInstanceOf(PositionComponent)
       expect(component?.entityId).toBe('entity_1')
-      expect(component?.x).toBe(10)
-      expect(component?.y).toBe(20)
+      const posComponent = component as PositionComponent
+      expect(posComponent.x).toBe(10)
+      expect(posComponent.y).toBe(20)
     })
 
     it('should handle component creation errors gracefully', () => {

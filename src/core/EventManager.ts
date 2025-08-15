@@ -275,6 +275,59 @@ export interface GameEvents {
   physics_body_updated: any
   physics_body_added: any
   physics_body_removed: any
+  
+  // Asset management events
+  'asset:registered': {
+    assetId: string
+    asset: any
+    timestamp: number
+  }
+  'asset:load:start': {
+    assetId: string
+    asset: any
+    timestamp: number
+  }
+  'asset:load:progress': {
+    assetId: string
+    loaded: number
+    total: number
+    percentage: number
+    timestamp: number
+  }
+  'asset:load:complete': {
+    assetId: string
+    asset: any
+    timestamp: number
+  }
+  'asset:load:error': {
+    assetId: string
+    error: string
+    timestamp: number
+  }
+  'asset:cache:hit': {
+    assetId: string
+    timestamp: number
+  }
+  'asset:cache:miss': {
+    assetId: string
+    timestamp: number
+  }
+  'asset:visibility:change': {
+    assetId: string
+    isVisible: boolean
+    timestamp: number
+  }
+  'batch:complete': {
+    batchSize: number
+    completedAssets: string[]
+    timestamp: number
+  }
+  'memory:warning': {
+    message: string
+    currentUsage: number
+    threshold: number
+    timestamp: number
+  }
 }
 
 export type EventType = keyof GameEvents

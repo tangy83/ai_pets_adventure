@@ -49,7 +49,7 @@ describe('Entity Component System', () => {
   let entityFactory: EntityFactory
 
   beforeEach(() => {
-    eventManager = new EventManager()
+    eventManager = EventManager.getInstance()
     entityManager = new EntityManager(eventManager)
     systemManager = new ECSSystemManager(entityManager, eventManager)
     entityFactory = new EntityFactory(entityManager)
@@ -148,21 +148,21 @@ describe('Entity Component System', () => {
       entityManager.addComponent(entity.id, position)
       entityManager.removeComponent(entity.id, 'position')
 
-      expect(entityCreatedHandler).toHaveBeenCalledWith({
+      expect(entityCreatedHandler).toHaveBeenCalledWith(expect.objectContaining({
         entityId: entity.id,
         name: 'Test Entity',
         tags: []
-      })
+      }))
 
-      expect(componentAddedHandler).toHaveBeenCalledWith({
+      expect(componentAddedHandler).toHaveBeenCalledWith(expect.objectContaining({
         entityId: entity.id,
         componentType: 'position'
-      })
+      }))
 
-      expect(componentRemovedHandler).toHaveBeenCalledWith({
+      expect(componentRemovedHandler).toHaveBeenCalledWith(expect.objectContaining({
         entityId: entity.id,
         componentType: 'position'
-      })
+      }))
     })
   })
 
@@ -225,10 +225,10 @@ describe('Entity Component System', () => {
       systemManager.addSystem(errorSystem)
       systemManager.updateSystems(16.67)
 
-      expect(errorHandler).toHaveBeenCalledWith({
+      expect(errorHandler).toHaveBeenCalledWith(expect.objectContaining({
         systemName: 'error_system',
         error: 'System error'
-      })
+      }))
     })
   })
 
