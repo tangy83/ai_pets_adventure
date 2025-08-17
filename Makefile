@@ -72,10 +72,10 @@ test-rewards:
 test-performance:
 	@echo "🚀 Testing Reward Calculator Performance..."
 	@echo "Running performance benchmarks..."
-	@node test-rewards-performance.js
+	@node tests/test-rewards-performance.js
 	@echo ""
 	@echo "💡 For detailed memory analysis, run:"
-	@echo "   node --expose-gc test-rewards-performance.js"
+	@echo "   node --expose-gc tests/test-rewards-performance.js"
 
 # Demo all environments
 demo:

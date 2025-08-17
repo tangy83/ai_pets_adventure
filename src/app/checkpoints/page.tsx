@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { CheckpointSystem, CheckpointData, CheckpointSummary } from '../../worlds/CheckpointSystem'
 
 export default function CheckpointsPage() {
@@ -22,19 +22,31 @@ export default function CheckpointsPage() {
     petBond: 0
   })
   const [questProgress, setQuestProgress] = useState({
-    activeQuests: [],
-    completedQuests: [],
-    questPoints: 0
+    activeQuests: [] as Array<{
+      id: string
+      name: string
+      progress: number
+      objectives: Array<{
+        id: string
+        description: string
+        completed: boolean
+        progress: number
+      }>
+    }>,
+    completedQuests: [] as string[],
+    questPoints: 0,
+    questChains: [] as Array<[string, string[]]>,
+    questDependencies: [] as Array<[string, string[]]>
   })
   const [achievements, setAchievements] = useState({
-    unlocked: [],
-    progress: {}
+    unlocked: [] as string[],
+    progress: {} as Record<string, number>
   })
   const [gameState, setGameState] = useState({
     currentWorld: 'default',
-    unlockedAreas: [],
-    inventory: {},
-    skills: {},
+    unlockedAreas: [] as string[],
+    inventory: {} as Record<string, number>,
+    skills: {} as Record<string, number>,
     playTime: 0
   })
 
@@ -49,12 +61,13 @@ export default function CheckpointsPage() {
         refreshStats()
         
         // Listen for events
-        system.eventManager.on('checkpoint:created', handleCheckpointEvent)
-        system.eventManager.on('checkpoint:restored', handleCheckpointEvent)
-        system.eventManager.on('checkpoint:deleted', handleCheckpointEvent)
-        system.eventManager.on('checkpoint:updated', handleCheckpointEvent)
-        system.eventManager.on('checkpoint:imported', handleCheckpointEvent)
-        system.eventManager.on('checkpoint:cleared', handleCheckpointEvent)
+        const eventManager = system.getEventManager()
+        eventManager.on('checkpoint:created', handleCheckpointEvent)
+        eventManager.on('checkpoint:restored', handleCheckpointEvent)
+        eventManager.on('checkpoint:deleted', handleCheckpointEvent)
+        eventManager.on('checkpoint:updated', handleCheckpointEvent)
+        eventManager.on('checkpoint:imported', handleCheckpointEvent)
+        eventManager.on('checkpoint:cleared', handleCheckpointEvent)
         
         addLog('✅ Checkpoint System initialized')
       } catch (error) {
@@ -139,7 +152,10 @@ export default function CheckpointsPage() {
         setPlayerData(checkpoint.playerData)
         setQuestProgress(checkpoint.questProgress)
         setAchievements(checkpoint.achievements)
-        setGameState(checkpoint.gameState)
+        setGameState({
+          ...checkpoint.gameState,
+          playTime: checkpoint.metadata.playTime || 0
+        })
         
         addLog(`✅ Checkpoint restored: ${checkpoint.name}`)
       } else {
@@ -269,7 +285,9 @@ export default function CheckpointsPage() {
     setQuestProgress({
       activeQuests: [],
       completedQuests: [],
-      questPoints: 0
+      questPoints: 0,
+      questChains: [],
+      questDependencies: []
     })
     setAchievements({
       unlocked: [],

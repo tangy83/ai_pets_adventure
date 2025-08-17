@@ -8,9 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test": "jest --config config/jest.config.cjs",
+    "test:watch": "jest --config config/jest.config.cjs --watch",
+    "test:coverage": "jest --config config/jest.config.cjs --coverage",
     "test:e2e": "cypress run",
     "test:e2e:open": "cypress open",
     "test:cross-browser": "playwright test",
@@ -34,9 +34,13 @@
   "author": "AI Pets Adventure Team",
   "license": "MIT",
   "type": "commonjs",
+  "jest": {
+    "config": "./config/jest.config.cjs"
+  },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.3.0",
+    "@tensorflow/tfjs": "^4.17.0",
     "@types/dom-mediacapture-record": "^1.0.22",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.2.1",

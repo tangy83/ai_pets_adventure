@@ -99,29 +99,40 @@ export interface GameEvents {
     entityId: string
     name: string
     tags: string[]
+    timestamp: number
   }
   entityDestroyed: {
     entityId: string
+    timestamp: number
   }
   componentAdded: {
     entityId: string
     componentType: string
+    timestamp: number
   }
   componentRemoved: {
     entityId: string
     componentType: string
+    timestamp: number
   }
-  entitiesCleared: {}
+  entitiesCleared: {
+    timestamp: number
+  }
   systemAdded: {
     systemName: string
+    timestamp: number
   }
   systemRemoved: {
     systemName: string
+    timestamp: number
   }
-  systemsCleared: {}
+  systemsCleared: {
+    timestamp: number
+  }
   systemError: {
     systemName: string
     error: string
+    timestamp: number
   }
   recoveryFailed: {
     errorId: string
@@ -328,6 +339,828 @@ export interface GameEvents {
     threshold: number
     timestamp: number
   }
+  
+  // Memory Management events
+  'textureAtlas:created': {
+    atlasId: string
+    size: number
+    timestamp: number
+  }
+  'textureAtlas:full': {
+    atlasId: string
+    timestamp: number
+  }
+  'texture:added': {
+    atlasId: string
+    textureId: string
+    coordinates: any
+    timestamp: number
+  }
+  'objectPool:created': {
+    poolId: string
+    type: string
+    initialSize: number
+    timestamp: number
+  }
+  'objectPool:resized': {
+    poolId: string
+    type: string
+    newSize: number
+    oldSize: number
+    timestamp: number
+  }
+  'memory:optimized': {
+    savedMemory: number
+    optimizationType: string
+    timestamp: number
+  }
+  'textureAtlas:optimized': {
+    atlasId: string
+    savedMemory: number
+    timestamp: number
+  }
+  
+  // Additional asset management events
+  'asset:cache:cleared': {
+    timestamp: number
+  }
+  'asset:cache:removed': {
+    assetId: string
+    timestamp: number
+  }
+  'lazyLoader:destroyed': {
+    timestamp: number
+  }
+  
+  // Input management events
+  'focusChange': {
+    elementId: string
+    hasFocus: boolean
+    timestamp: number
+  }
+  
+  // Asset compression events
+  assetCompressionRequested: {
+    assetId: string
+    compressionType: string
+    timestamp: number
+  }
+  assetCompressionCompleted: {
+    assetId: string
+    originalSize: number
+    compressedSize: number
+    compressionRatio: number
+    timestamp: number
+  }
+  assetCompressionFailed: {
+    assetId: string
+    error: string
+    timestamp: number
+  }
+  
+  // Asset management additional events
+  assetUnloaded: {
+    assetId: string
+    timestamp: number
+  }
+  
+
+  textureAtlasCreated: {
+    atlasId: string
+    textureCount: number
+    timestamp: number
+  }
+  assetCompressed: {
+    assetId: string
+    compressionRatio: number
+    timestamp: number
+  }
+  progressiveTiersCreated: {
+    assetId: string
+    tierCount: number
+    timestamp: number
+  }
+  assetLoadingOptimized: {
+    optimizationType: string
+    improvement: number
+    timestamp: number
+  }
+  assetLoaded: {
+    assetId: string
+    loadTime: number
+    timestamp: number
+  }
+  assetLoadFailed: {
+    assetId: string
+    error: string
+    timestamp: number
+  }
+  batchProgress: {
+    batchId: string
+    progress: number
+    timestamp: number
+  }
+  batchLoaded: {
+    batchId: string
+    assetCount: number
+    timestamp: number
+  }
+  assetRestoredFromCache: {
+    assetId: string
+    cacheType: string
+    timestamp: number
+  }
+  chunkAssetsRequested: {
+    chunkId: string
+    assetCount: number
+    timestamp: number
+  }
+  chunkAssetsUnloaded: {
+    chunkId: string
+    assetCount: number
+    timestamp: number
+  }
+  
+  // Chunk management events
+  chunkLoaded: {
+    chunkId: string
+    fromCache?: boolean
+    loadTime?: number
+    timestamp: number
+  }
+  chunkUnloaded: {
+    chunkId: string
+    reason: string
+    timestamp: number
+  }
+  chunkLoadFailed: {
+    chunkId: string
+    error: string
+    timestamp: number
+  }
+  chunkBecameVisible: {
+    chunkId: string
+    timestamp: number
+  }
+  chunkBecameHidden: {
+    chunkId: string
+    timestamp: number
+  }
+  chunkAssetLoadFailed: {
+    chunkId: string
+    assetId: string
+    error: string
+    timestamp: number
+  }
+  
+  // World management events
+  worldCreated: {
+    worldId: string
+    worldData: any
+    timestamp: number
+  }
+  worldUnloaded: {
+    worldId: string
+    timestamp: number
+  }
+  worldStatusChanged: {
+    worldId: string
+    oldStatus: string
+    newStatus: string
+    timestamp: number
+  }
+  worldDestroyed: {
+    worldId: string
+    timestamp: number
+  }
+  
+  // Player world events
+  playerJoinedWorld: {
+    playerId: string
+    worldId: string
+    timestamp: number
+  }
+  playerLeftWorld: {
+    playerId: string
+    worldId: string
+    timestamp: number
+  }
+  
+  // Quest system events
+  questAbandoned: {
+    questId: string
+    player: any
+    timestamp?: number
+  }
+  questReadyToComplete: {
+    questId: string
+    player: any
+    timestamp?: number
+  }
+  questProgressUpdated: {
+    questId: string
+    objectiveId: string
+    player: any
+    timestamp?: number
+  }
+  questReset: {
+    questId: string
+    player: any
+    timestamp?: number
+  }
+  questLevelLoaded: {
+    levelId: string
+    questId: string
+    timestamp: number
+  }
+  questCheckpointSaved: {
+    playerId: string
+    checkpointId: string
+    checkpointName: string
+    questCount: number
+    timestamp?: number
+  }
+  questCheckpointRestored: {
+    playerId: string
+    checkpointId: string
+    restoredQuests: number
+    timestamp?: number
+  }
+  questChainAvailable: {
+    questId: string
+    player: any
+    timestamp?: number
+  }
+  questCompletedInWorld: {
+    questId: string
+    worldId: string
+    player: any
+    timestamp: number
+  }
+  
+  // Level management events
+  levelLoadStarted: {
+    levelId: string
+    questId: string
+    timestamp: number
+  }
+  levelAssetsLoaded: {
+    levelId: string
+    type: string
+    timestamp: number
+  }
+  levelLoadCompleted: {
+    level: any
+    questId: string
+    timestamp: number
+  }
+  levelLoadFailed: {
+    levelId: string
+    questId: string
+    error: string
+    timestamp: number
+  }
+  levelUnloaded: {
+    levelId: string
+    timestamp: number
+  }
+  checkpointSaved: {
+    levelId: string
+    checkpointId: string
+    saveData: any
+    timestamp: number
+  }
+  checkpointLoaded: {
+    levelId: string
+    checkpointId: string
+    saveData: any
+    timestamp: number
+  }
+  levelDifficultyScaled: {
+    levelId: string
+    difficultyMultiplier: number
+    scaling: any
+    timestamp: number
+  }
+  levelValidated: {
+    levelId: string
+    result: any
+    timestamp: number
+  }
+  levelReset: {
+    levelId: string
+    timestamp: number
+  }
+  levelPreloadCompleted: {
+    levelId: string
+    timestamp: number
+  }
+  levelPreloadFailed: {
+    levelId: string
+    error: string
+    timestamp: number
+  }
+  
+  // Checkpoint system events
+  'checkpoint:created': {
+    checkpoint: any
+    id: string
+    timestamp: number
+  }
+  'checkpoint:restored': {
+    checkpoint: any
+    id: string
+    timestamp: number
+  }
+  'checkpoint:deleted': {
+    checkpointId: string
+    timestamp: number
+  }
+  'checkpoint:updated': {
+    checkpointId: string
+    updates: any
+    timestamp: number
+  }
+  'checkpoint:imported': {
+    checkpoint: any
+    id: string
+    timestamp: number
+  }
+  'checkpoint:cleared': {}
+  'checkpoint:restore:failed': {
+    checkpointId: string
+    error: string
+    timestamp: number
+  }
+  'checkpoint:autoSave:triggered': {}
+  
+  // Objective tracking events
+  objectiveTrackerInitialized: {
+    playerId: string
+    timestamp: number
+  }
+  objectiveTrackingStarted: {
+    questId: string
+    objectiveId: string
+    timestamp: number
+  }
+  objectiveProgressUpdated: {
+    objectiveId: string
+    progress: number
+    timestamp: number
+  }
+  objectiveHintProvided: {
+    objectiveId: string
+    hint: string
+    timestamp: number
+  }
+  objectiveReset: {
+    objectiveId: string
+    timestamp: number
+  }
+  objectiveMilestoneReached: {
+    objectiveId: string
+    milestone: string
+    timestamp: number
+  }
+  objectiveCompleted: {
+    objectiveId: string
+    questId: string
+    player: any
+    timestamp?: number
+  }
+  objectiveTrackerAutoSave: {
+    playerId: string
+    timestamp: number
+  }
+  
+  // Difficulty scaling events
+  difficultyAdjusted: {
+    questId: string
+    playerId: string
+    oldDifficulty: number
+    newDifficulty: number
+    factors: any
+    timestamp: number
+  }
+  
+  // Pet behavior events
+  petSkillUsed: {
+    petId: string
+    skillId: string
+    timestamp: number
+  }
+  petBehaviorChanged: {
+    petId: string
+    oldBehavior: string
+    newBehavior: string
+    timestamp: number
+  }
+  
+  // Reward system events
+  rewardsCalculated: {
+    questId: string
+    playerId: string
+    rewards: any
+    calculation: any
+    timestamp: number
+  }
+  objectiveRewardsCalculated: {
+    objectiveId: string
+    playerId: string
+    rewards: any
+    timestamp: number
+  }
+  rewardsDistributed: {
+    playerId: string
+    rewards: any
+    timestamp: number
+  }
+  rewardsCheckpointSaved: {
+    playerId: string
+    checkpointId: string
+    timestamp: number
+  }
+  rewardsCheckpointRestored: {
+    playerId: string
+    checkpointId: string
+    timestamp: number
+  }
+  
+  // World factory events
+  worldFactoryInitialized: {
+    timestamp: number
+  }
+  
+  // Input events
+  keyPress: {
+    key: string
+    keyCode: string
+    timestamp: number
+  }
+  gameAction: {
+    action: string
+    data: any
+  }
+  gameActionRelease: {
+    action: string
+    data: any
+  }
+  inputAction: {
+    action: string
+    data: any
+  }
+  inputProfileChanged: {
+    profile: string
+    previousProfile: string
+  }
+  
+  // Accessibility events
+  accessibilityFocusChange: {
+    elementId: string
+    hasFocus: boolean
+    timestamp: number
+  }
+  accessibilityElementActivate: {
+    elementId: string
+    timestamp: number
+  }
+  accessibilityTouchTargetValidation: {
+    elementId: string
+    isValid: boolean
+    timestamp: number
+  }
+  accessibilityTabNavigation: {
+    direction: 'forward' | 'backward'
+    elementId: string
+  }
+  accessibilityHelp: {
+    context: string
+    elementId: string
+  }
+  accessibilityHotkey: {
+    key: string
+    elementId: string
+  }
+  
+  // Keyboard events
+  keyboardBlur: {
+    timestamp: number
+  }
+  keyboardFocus: {
+    timestamp: number
+  }
+  keyboardHidden: {
+    timestamp: number
+  }
+  keyboardVisible: {
+    timestamp: number
+  }
+  
+  // Touch events
+  touchTargetValidation: {
+    elementId: string
+    isValid: boolean
+    timestamp: number
+  }
+  
+  // Mouse events
+  mouseEvent: {
+    type: string
+    button?: number
+    x?: number
+    y?: number
+    deltaX?: number
+    deltaY?: number
+    deltaZ?: number
+    timestamp: number
+    target?: string
+    data?: any
+  }
+  mouseDown: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+  }
+  mouseUp: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+  }
+  mouseMove: {
+    x: number
+    y: number
+    deltaX: number
+    deltaY: number
+    timestamp: number
+  }
+  mouseEnter: {
+    timestamp: number
+  }
+  mouseLeave: {
+    timestamp: number
+  }
+  click: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+    target?: string
+  }
+  doubleClick: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+    target?: string
+  }
+  rightClick: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+    target?: string
+  }
+  middleClick: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+    target?: string
+  }
+  dragStart: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+  }
+  dragMove: {
+    button: number
+    x: number
+    y: number
+    deltaX: number
+    deltaY: number
+    timestamp: number
+  }
+  dragEnd: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+  }
+  hover: {
+    x: number
+    y: number
+    timestamp: number
+    target?: string
+  }
+  hoverEnd: {
+    x: number
+    y: number
+    timestamp: number
+    target?: string
+  }
+  wheel: {
+    deltaX: number
+    deltaY: number
+    deltaZ: number
+    timestamp: number
+  }
+  
+  // Element events
+  elementActivate: {
+    elementId: string
+    timestamp: number
+  }
+  
+  // Pet AI events
+  'pet:ai:registered': {
+    petId: string
+    timestamp: number
+  }
+  'pet:ai:behavior:executed': {
+    petId: string
+    behavior: string
+    success: boolean
+    timestamp: number
+  }
+  'pet:ai:behavior:changed': {
+    petId: string
+    behavior: string
+    timestamp: number
+  }
+  'pet:ai:skill:added': {
+    petId: string
+    skill: any
+    timestamp: number
+  }
+  'pet:ai:state:updated': {
+    petId: string
+    state: any
+    timestamp: number
+  }
+  'pet:ai:destroyed': {
+    petId: string
+    timestamp: number
+  }
+  'pet:ai:memory:added': {
+    petId: string
+    memory: any
+    timestamp: number
+  }
+  'pet:ai:learning:progress': {
+    petId: string
+    progress: any
+    timestamp: number
+  }
+  'pet:ai:context:analyzed': {
+    petId: string
+    context: any
+    timestamp: number
+  }
+  
+  // Client-side AI Processing events
+  'client:ai:initialized': {
+    timestamp: number
+    modelsLoaded: number
+    capabilities: any
+  }
+  'client:ai:model:loaded': {
+    modelId: string
+    modelName: string
+    timestamp: number
+  }
+  'client:ai:model:unloaded': {
+    modelId: string
+    timestamp: number
+  }
+  'client:ai:learning:recorded': {
+    experienceId: string
+    context: string
+    success: boolean
+    timestamp: number
+  }
+  'client:ai:learning:training:completed': {
+    modelId: string
+    accuracy: number
+    timestamp: number
+  }
+  'client:ai:cloud:sync:queued': {
+    modelId: string
+    changesCount: number
+    timestamp: number
+  }
+  'client:ai:cloud:sync:completed': {
+    modelId: string
+    timestamp: number
+  }
+  'client:ai:cloud:sync:failed': {
+    modelId: string
+    error: string
+    timestamp: number
+  }
+  'client:ai:performance:updated': {
+    metrics: any
+    timestamp: number
+  }
+  'client:ai:complexity:adjusted': {
+    reason: string
+    newBatchSize: number
+    timestamp: number
+  }
+  'client:ai:connection:restored': {
+    timestamp: number
+  }
+  'client:ai:connection:lost': {
+    timestamp: number
+  }
+  
+  // Multi-Modal AI events
+  'multiModalAI:initialized': {
+    timestamp: number
+    capabilities: any
+  }
+  'multiModalAI:voice:started': {
+    timestamp: number
+  }
+  'multiModalAI:voice:stopped': {
+    timestamp: number
+  }
+  'multiModalAI:voice:command': {
+    text: string
+    confidence: number
+    timestamp: number
+    intent?: string
+    entities?: string[]
+  }
+  'multiModalAI:voice:error': {
+    error: string
+    timestamp: number
+  }
+  'multiModalAI:voice:ended': {
+    timestamp: number
+  }
+  'multiModalAI:voice:processed': {
+    text: string
+    confidence: number
+    timestamp: number
+    intent?: string
+    entities?: string[]
+    analysis: any
+  }
+  'multiModalAI:drawing:started': {
+    timestamp: number
+    canvasSize: { width: number; height: number }
+  }
+  'multiModalAI:drawing:stopped': {
+    timestamp: number
+  }
+  'multiModalAI:drawing:analyzed': {
+    recognized: boolean
+    confidence: number
+    interpretation: string
+    category: string
+    timestamp: number
+  }
+  'multiModalAI:text:processed': {
+    intent: string
+    confidence: number
+    entities: string[]
+    sentiment: string
+    context: string
+    timestamp: number
+  }
+  'multiModalAI:touch:gesture': {
+    type: string
+    direction?: string
+    distance: number
+    duration: number
+    fingers: number
+    timestamp: number
+  }
+  'multiModalAI:camera:initialized': {
+    timestamp: number
+    resolution: { width: number; height: number }
+  }
+  'multiModalAI:context:updated': {
+    context: any
+    analysis: any
+    timestamp: number
+  }
+  'multiModalAI:fusion:result': {
+    primaryInput: string
+    confidence: number
+    interpretedCommand: string
+    context: any
+    timestamp: number
+  }
+  'multiModalAI:config:updated': {
+    config: any
+    timestamp: number
+  }
+  
 }
 
 export type EventType = keyof GameEvents
@@ -346,6 +1179,7 @@ export interface EventSubscription<T extends EventType = EventType> {
 }
 
 export class EventManager {
+  private static instance: EventManager
   private events: Map<EventType, EventSubscription<any>[]> = new Map()
   private eventQueue: Array<{ type: EventType; data: any; timestamp: number }> = []
   private isProcessing: boolean = false
@@ -356,6 +1190,13 @@ export class EventManager {
   constructor() {
     // Process events on the next tick to avoid blocking the main thread
     setInterval(() => this.processEvents(), 16) // ~60fps
+  }
+
+  public static getInstance(): EventManager {
+    if (!EventManager.instance) {
+      EventManager.instance = new EventManager()
+    }
+    return EventManager.instance
   }
 
   public on<T extends EventType>(

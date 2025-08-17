@@ -1,3 +1,5 @@
+'use client'
+
 export default function HomePage() {
   return (
     <div style={{
@@ -38,6 +40,66 @@ export default function HomePage() {
       <div style={{ marginTop: '2rem' }}>
         <p style={{ fontSize: '1.2rem' }}>🚀 Ready to Play!</p>
         <p style={{ fontSize: '1rem', opacity: 0.8 }}>Your AI Pets Adventure is fully functional!</p>
+        
+        <div style={{ marginTop: '2rem' }}>
+          <a 
+            href="/game" 
+            style={{
+              display: 'inline-block',
+              background: 'linear-gradient(45deg, #FF6B6B, #4ECDC4)',
+              color: 'white',
+              padding: '1rem 2rem',
+              borderRadius: '10px',
+              textDecoration: 'none',
+              fontSize: '1.2rem',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+              transition: 'all 0.2s ease',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)'
+            }}
+
+          >
+            🎮 Launch Game Interface
+          </a>
+        </div>
+        
+        <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <a 
+            href="/checkpoints" 
+            style={{
+              background: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              border: '1px solid rgba(255,255,255,0.3)'
+            }}
+          >
+            🎯 Checkpoint System
+          </a>
+          
+          <a 
+            href="/test-rewards" 
+            style={{
+              background: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              border: '1px solid rgba(255,255,255,0.3)'
+            }}
+          >
+            💰 Reward Calculator
+          </a>
+        </div>
       </div>
     </div>
   )

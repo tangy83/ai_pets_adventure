@@ -432,7 +432,7 @@ export class MemoryManagement {
     const maxCacheSize = 100
     if (this.textureCache.size > maxCacheSize) {
       const entries = Array.from(this.textureCache.entries())
-      const toRemove = entries.slice(0, entries.size - maxCacheSize)
+      const toRemove = entries.slice(0, entries.length - maxCacheSize)
       
       toRemove.forEach(([key]) => {
         this.textureCache.delete(key)

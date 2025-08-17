@@ -129,7 +129,7 @@ export class AudioSystem extends BaseSystem {
   }
 
   private loadDefaultAudio(): void {
-    // Load default audio clips
+    // Load default audio clips with error handling
     this.loadClip({
       id: 'background-music',
       url: '/assets/audio/background-music.mp3',
@@ -157,7 +157,7 @@ export class AudioSystem extends BaseSystem {
       preload: true
     })
 
-    this.log('Default audio clips loaded')
+    this.log('Default audio clips loaded (will show warnings if files are missing)')
   }
 
   private updateAudioInstances(deltaTime: number): void {
@@ -202,6 +202,11 @@ export class AudioSystem extends BaseSystem {
   }
 
   private preloadClip(clip: AudioClip): void {
+    if (!clip.url || clip.url === '') {
+      this.log(`Skipping preload for ${clip.id}: no URL provided`, 'warn')
+      return
+    }
+    
     const audio = new Audio()
     audio.preload = 'auto'
     
@@ -210,7 +215,8 @@ export class AudioSystem extends BaseSystem {
     })
     
     audio.addEventListener('error', (error) => {
-      this.log(`Error preloading audio clip ${clip.id}: ${error}`, 'error')
+      this.log(`Error preloading audio clip ${clip.id}: ${error}`, 'warn')
+      // This is expected when audio files don't exist yet
     })
     
     audio.src = clip.url

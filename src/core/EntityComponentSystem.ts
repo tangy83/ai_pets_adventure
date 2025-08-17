@@ -505,7 +505,7 @@ export class EntityManager {
   public clear(): void {
     this.entities.clear()
     this.entityCounter = 0
-    this.eventManager.emit('entitiesCleared', {})
+    this.eventManager.emit('entitiesCleared', { timestamp: Date.now() })
   }
 }
 
@@ -610,7 +610,7 @@ export class ECSSystemManager {
     
     this.systems.clear()
     this.systemOrder = []
-    this.eventManager.emit('systemsCleared', {})
+    this.eventManager.emit('systemsCleared', { timestamp: Date.now() })
   }
 }
 

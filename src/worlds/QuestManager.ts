@@ -844,7 +844,9 @@ export class QuestManager {
     
     // Listen for objective completion events
     this.eventManager.on('objectiveCompleted', ({ objectiveId, questId, player }) => {
-      this.handleObjectiveCompleted(objectiveId, questId, player.id)
+      if (player && player.id) {
+        this.handleObjectiveCompleted(objectiveId, questId, player.id)
+      }
     })
   }
 
@@ -1149,8 +1151,13 @@ export class QuestManager {
           if (quest) {
             quest.progress = questData.progress
             quest.objectives = questData.objectives
-            quest.startTime = questData.startTime
-            quest.attempts = questData.attempts
+            // Handle optional properties gracefully
+            if ('startTime' in questData) {
+              (quest as any).startTime = questData.startTime
+            }
+            if ('attempts' in questData) {
+              (quest as any).attempts = questData.attempts
+            }
             quest.status = 'active'
             
             // Re-add to active quests if not already there

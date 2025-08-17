@@ -494,9 +494,9 @@ export class InputManager {
     this.eventManager.on('input', this.handleInputEvent.bind(this))
     
     // Listen for accessibility events
-    this.eventManager.on('focusChange', this.handleAccessibilityEvent.bind(this))
-    this.eventManager.on('elementActivate', this.handleAccessibilityEvent.bind(this))
-    this.eventManager.on('touchTargetValidation', this.handleAccessibilityEvent.bind(this))
+    this.eventManager.on('accessibilityFocusChange', this.handleAccessibilityFocusChange.bind(this))
+    this.eventManager.on('accessibilityElementActivate', this.handleAccessibilityElementActivate.bind(this))
+    this.eventManager.on('accessibilityTouchTargetValidation', this.handleAccessibilityTouchTargetValidation.bind(this))
   }
 
   private handleInputEvent(event: InputEvent): void {
@@ -506,7 +506,10 @@ export class InputManager {
     const action = this.mapInputToAction(event)
     if (action) {
       this.actionQueue.push(action)
-      this.eventManager.emit('inputAction', action)
+      this.eventManager.emit('inputAction', {
+        action: action.type,
+        data: action
+      })
     }
     
     // Add to input history
@@ -519,31 +522,28 @@ export class InputManager {
     this.updatePerformanceMetrics(startTime)
   }
 
-  private handleAccessibilityEvent(event: InputEvent): void {
-    // Handle accessibility-specific events
-    switch (event.type) {
-      case 'focusChange':
-        this.eventManager.emit('accessibilityFocusChange', event.data)
-        break
-      case 'elementActivate':
-        this.eventManager.emit('accessibilityElementActivate', event.data)
-        break
-      case 'touchTargetValidation':
-        this.validateTouchTargetAccessibility(event.data)
-        break
-    }
+  private handleAccessibilityFocusChange(data: { elementId: string; hasFocus: boolean; timestamp: number }): void {
+    // Handle accessibility focus change events
+    this.eventManager.emit('accessibilityFocusChange', data)
   }
 
-  private validateTouchTargetAccessibility(data: any): void {
-    const { x, y, minSize } = data
-    // In a real implementation, you would check if the element at (x, y) meets accessibility requirements
-    // For now, we'll just emit an event
+  private handleAccessibilityElementActivate(data: { elementId: string; timestamp: number }): void {
+    // Handle accessibility element activation events
+    this.eventManager.emit('accessibilityElementActivate', data)
+  }
+
+  private handleAccessibilityTouchTargetValidation(data: { elementId: string; isValid: boolean; timestamp: number }): void {
+    // Handle accessibility touch target validation events
+    this.validateTouchTargetAccessibility(data)
+  }
+
+  private validateTouchTargetAccessibility(data: { elementId: string; isValid: boolean; timestamp: number }): void {
+    // In a real implementation, you would check if the element meets accessibility requirements
+    // For now, we'll just emit an event with the validated data
     this.eventManager.emit('accessibilityTouchTargetValidation', {
-      x,
-      y,
-      minSize,
-      isValid: true, // Simplified validation
-      timestamp: performance.now()
+      elementId: data.elementId,
+      isValid: data.isValid,
+      timestamp: data.timestamp
     })
   }
 
@@ -634,9 +634,10 @@ export class InputManager {
       this.inputSystem.setTouchSensitivity(profile.sensitivity.touch)
       this.inputSystem.setAccessibilityConfig(profile.accessibility)
       
+      const previousProfile = this.currentProfile
       this.eventManager.emit('inputProfileChanged', {
         profile: profileName,
-        timestamp: performance.now()
+        previousProfile: previousProfile
       })
       
       return true

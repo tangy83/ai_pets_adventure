@@ -215,9 +215,7 @@ export class KeyboardInputHandler {
     // Emit key press event (useful for character input)
     this.eventManager.emit('keyPress', {
       key,
-      code: keyCode,
-      charCode: event.charCode,
-      modifiers: { ...this.keyboardState.modifiers },
+      keyCode,
       timestamp
     })
 
@@ -230,19 +228,19 @@ export class KeyboardInputHandler {
   private handleWindowBlur(): void {
     // Clear all key states when window loses focus
     this.clearKeyStates()
-    this.eventManager.emit('keyboardBlur', { timestamp: performance.now(), timestamp: Date.now() })
+    this.eventManager.emit('keyboardBlur', { timestamp: performance.now() })
   }
 
   private handleWindowFocus(): void {
-    this.eventManager.emit('keyboardFocus', { timestamp: performance.now(), timestamp: Date.now() })
+    this.eventManager.emit('keyboardFocus', { timestamp: performance.now() })
   }
 
   private handleVisibilityChange(): void {
     if (document.hidden) {
       this.clearKeyStates()
-      this.eventManager.emit('keyboardHidden', { timestamp: performance.now(), timestamp: Date.now() })
+      this.eventManager.emit('keyboardHidden', { timestamp: performance.now() })
     } else {
-      this.eventManager.emit('keyboardVisible', { timestamp: performance.now(), timestamp: Date.now() })
+      this.eventManager.emit('keyboardVisible', { timestamp: performance.now() })
     }
   }
 
@@ -336,24 +334,25 @@ export class KeyboardInputHandler {
         // Tab navigation
         this.eventManager.emit('accessibilityTabNavigation', {
           direction: event.shiftKey ? 'backward' : 'forward',
-          timestamp: performance.now()
+          elementId: 'current-focus'
         })
         break
       case 'Enter':
       case 'Space':
         // Element activation
         if (this.keyboardState.modifiers.alt) {
-          this.eventManager.emit('accessibilityElementActivate', {
-            key: event.code,
-            timestamp: performance.now()
-          })
+                  this.eventManager.emit('accessibilityElementActivate', {
+          elementId: 'current-focus',
+          timestamp: performance.now()
+        })
         }
         break
       case 'F1':
         // Help system
-        this.eventManager.emit('accessibilityHelp', {
-          timestamp: performance.now()
-        })
+              this.eventManager.emit('accessibilityHelp', {
+        context: 'keyboard',
+        elementId: 'current-focus'
+      })
         break
     }
   }
@@ -363,7 +362,7 @@ export class KeyboardInputHandler {
     if (event.key === 'h' || event.key === 'H') {
       this.eventManager.emit('accessibilityHotkey', {
         key: event.key,
-        timestamp: performance.now()
+        elementId: 'current-focus'
       })
     }
   }

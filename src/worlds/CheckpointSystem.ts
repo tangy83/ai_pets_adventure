@@ -26,6 +26,8 @@ export interface CheckpointData {
     }>
     completedQuests: string[]
     questPoints: number
+    questChains: Array<[string, string[]]>
+    questDependencies: Array<[string, string[]]>
   }
   achievements: {
     unlocked: string[]
@@ -76,6 +78,13 @@ export class CheckpointSystem {
       CheckpointSystem.instance = new CheckpointSystem()
     }
     return CheckpointSystem.instance
+  }
+
+  /**
+   * Get the event manager for external event listening
+   */
+  public getEventManager(): EventManager {
+    return this.eventManager
   }
 
   /**
@@ -143,8 +152,8 @@ export class CheckpointSystem {
     
     // Emit event
     this.eventManager.emit('checkpoint:created', { 
-      checkpointId: id, 
-      playerId: playerData.id || 'unknown',
+      checkpoint: checkpoint, 
+      id: id, 
       timestamp: Date.now() 
     })
     
@@ -159,8 +168,9 @@ export class CheckpointSystem {
     
     if (!checkpoint) {
       this.eventManager.emit('checkpoint:restore:failed', { 
-        error: 'Checkpoint not found', 
-        checkpointId 
+        checkpointId, 
+        error: 'Checkpoint not found',
+        timestamp: Date.now()
       })
       return null
     }
@@ -168,8 +178,9 @@ export class CheckpointSystem {
     // Validate checksum
     if (!this.validateCheckpoint(checkpoint)) {
       this.eventManager.emit('checkpoint:restore:failed', { 
-        error: 'Checkpoint data corrupted', 
-        checkpointId 
+        checkpointId, 
+        error: 'Checkpoint data corrupted',
+        timestamp: Date.now()
       })
       return null
     }
@@ -247,8 +258,9 @@ export class CheckpointSystem {
     this.saveCheckpoints()
     
     this.eventManager.emit('checkpoint:updated', { 
-      checkpoint: updatedCheckpoint, 
-      id: checkpointId 
+      checkpointId, 
+      updates,
+      timestamp: Date.now()
     })
     
     return true

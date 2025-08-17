@@ -63,20 +63,20 @@ export default function TestRewardsPage() {
       const multiplierTestStart = performance.now()
       
       for (let i = 0; i < 10000; i++) {
-        const difficulty = ['easy', 'medium', 'hard', 'expert'][Math.floor(Math.random() * 4)]
-        const timeSpent = Math.random() * 1800
-        const timeLimit = 1800
-        const dailyStreak = Math.floor(Math.random() * 20) + 1
-        const weeklyStreak = Math.floor(Math.random() * 10) + 1
-        const petBond = Math.random() * 100
-        
         // Difficulty multiplier
+        const difficulty = ['easy', 'medium', 'hard', 'expert'][Math.floor(Math.random() * 4)]
         const difficultyMultiplier = {
           easy: 1.0,
           medium: 1.2,
           hard: 1.5,
           expert: 2.0
-        }[difficulty]
+        }[difficulty] || 1.0 // Default to 1.0 if difficulty is undefined
+        
+        const timeSpent = Math.random() * 1800
+        const timeLimit = 1800
+        const dailyStreak = Math.floor(Math.random() * 20) + 1
+        const weeklyStreak = Math.floor(Math.random() * 10) + 1
+        const petBond = Math.random() * 100
         
         // Time bonus
         const timeRatio = timeSpent / timeLimit
@@ -106,7 +106,7 @@ export default function TestRewardsPage() {
       
       // Test 3: Memory usage test
       addLog('📊 Testing memory usage...')
-      const memoryBefore = performance.memory ? performance.memory.usedJSHeapSize : 0
+      const memoryBefore = (performance as any).memory ? (performance as any).memory.usedJSHeapSize : 0
       
       // Create large dataset
       const largeDataset = []
@@ -126,7 +126,7 @@ export default function TestRewardsPage() {
         })
       }
       
-      const memoryAfter = performance.memory ? performance.memory.usedJSHeapSize : 0
+      const memoryAfter = (performance as any).memory ? (performance as any).memory.usedJSHeapSize : 0
       const memoryUsed = memoryAfter - memoryBefore
       
       addLog(`✅ Memory test completed: ${(memoryUsed / 1024 / 1024).toFixed(2)}MB used`)
@@ -259,7 +259,7 @@ export default function TestRewardsPage() {
       }
       
       // Calculate multipliers
-      const difficultyMultiplier = { easy: 1.0, medium: 1.2, hard: 1.5, expert: 2.0 }[completionMetadata.difficulty]
+      const difficultyMultiplier = { easy: 1.0, medium: 1.2, hard: 1.5, expert: 2.0 }[completionMetadata.difficulty] || 1.0
       const timeBonus = completionMetadata.timeSpent <= testQuest.timeLimit * 0.5 ? 1.3 : completionMetadata.timeSpent <= testQuest.timeLimit * 0.75 ? 1.1 : 1.0
       const streakBonus = 1.0 + Math.min(completionMetadata.dailyStreak * 0.05, 0.5) + Math.min(completionMetadata.weeklyStreak * 0.03, 0.3)
       const petBondBonus = playerData.petBond >= 100 ? 1.3 : playerData.petBond >= 75 ? 1.2 : playerData.petBond >= 50 ? 1.1 : 1.0
@@ -410,7 +410,7 @@ export default function TestRewardsPage() {
         addLog(`\n${index + 1}. ${scenario.name}`)
         addLog(`   Difficulty: ${scenario.difficulty}`)
         
-        const difficultyMultiplier = { easy: 1.0, medium: 1.2, hard: 1.5, expert: 2.0 }[scenario.difficulty]
+        const difficultyMultiplier = { easy: 1.0, medium: 1.2, hard: 1.5, expert: 2.0 }[scenario.difficulty] || 1.0
         const timeBonus = scenario.metadata.timeSpent <= 900 ? 1.3 : scenario.metadata.timeSpent <= 1350 ? 1.1 : 1.0
         const streakBonus = 1.0 + Math.min(scenario.metadata.dailyStreak * 0.05, 0.5) + Math.min((scenario.metadata.weeklyStreak || 0) * 0.03, 0.3)
         const petBondBonus = playerData.petBond >= 100 ? 1.3 : playerData.petBond >= 75 ? 1.2 : playerData.petBond >= 50 ? 1.1 : 1.0

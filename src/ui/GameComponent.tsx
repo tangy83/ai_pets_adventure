@@ -240,8 +240,10 @@ export const GameComponent: React.FC<GameComponentProps> = ({
 
   const initializeGame = async () => {
     try {
-      // Create game engine instance
-      const engine = new GameEngine()
+      // Create game engine instance without audio systems to avoid missing file errors
+      const engine = new GameEngine({
+        enableSystems: ['input', 'ai', 'physics', 'rendering'] // Exclude 'audio'
+      })
       gameEngineRef.current = engine
 
       // Set up event listeners

@@ -269,7 +269,29 @@ export class RewardCalculator {
    * Gets reward statistics for a player
    */
   public getPlayerRewardStats(playerId: string): PlayerRewardStats | undefined {
-    return this.playerStats.get(playerId)
+    let stats = this.playerStats.get(playerId)
+    if (!stats) {
+      // Create default stats for new players
+      stats = {
+        totalExperience: 0,
+        totalCoins: 0,
+        totalOrbs: 0,
+        totalItems: [],
+        totalSkills: [],
+        totalPetBond: 0,
+        totalUnlockables: [],
+        totalReputation: 0,
+        totalSpecialRewards: [],
+        totalValue: 0,
+        questsCompleted: 0,
+        objectivesCompleted: 0,
+        averageRewardValue: 0,
+        highestRewardValue: 0,
+        lastRewardTimestamp: 0
+      }
+      this.playerStats.set(playerId, stats)
+    }
+    return stats
   }
 
   /**
@@ -315,6 +337,20 @@ export class RewardCalculator {
    */
   public configure(config: Partial<RewardCalculatorConfig>): void {
     this.config = { ...this.config, ...config }
+  }
+
+  /**
+   * Gets the current configuration
+   */
+  public getCurrentConfig(): RewardCalculatorConfig {
+    return { ...this.config }
+  }
+
+  /**
+   * Resets configuration to default values
+   */
+  public resetToDefaultConfig(): void {
+    this.config = this.getDefaultConfig()
   }
 
   /**

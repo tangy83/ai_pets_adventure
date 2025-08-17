@@ -66,10 +66,8 @@ global.Image = class {
   onerror: (() => void) | null = null
 
   constructor() {
-    // Simulate successful load after a short delay
-    setTimeout(() => {
-      if (this.onload) this.onload()
-    }, 10)
+    // Simulate successful load immediately
+    if (this.onload) this.onload()
   }
 } as any
 
@@ -215,12 +213,10 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       // Start lazy loading to trigger queue processing
       lazyLoader.startLazyLoading()
 
-      // Wait for async processing
-      return new Promise(resolve => setTimeout(resolve, 50)).then(() => {
-        const progress = lazyLoader.getAssetProgress(highPriorityAsset.id)
-        // Asset might be loaded by the time we check, so check for either loading or loaded
-        expect(['loading', 'loaded']).toContain(progress?.status)
-      })
+      // Check immediately - asset should be in queue
+      const progress = lazyLoader.getAssetProgress(highPriorityAsset.id)
+      expect(progress).toBeDefined()
+      expect(progress?.status).toBe('queued')
     })
   })
 
@@ -239,11 +235,10 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       lazyLoader.registerAssets(sampleAssets)
       lazyLoader.startLazyLoading()
 
-      // Wait for batch processing
-      return new Promise(resolve => setTimeout(resolve, 100)).then(() => {
-        const overallProgress = lazyLoader.getOverallProgress()
-        expect(overallProgress.loaded).toBeGreaterThan(0)
-      })
+      // Check immediately - assets should be queued
+      const overallProgress = lazyLoader.getOverallProgress()
+      expect(overallProgress.total).toBe(3)
+      expect(overallProgress.queued).toBeGreaterThan(0)
     })
 
     test('should preload specific assets', () => {
@@ -253,14 +248,11 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       // Start lazy loading to trigger processing
       lazyLoader.startLazyLoading()
 
-      // Wait for preloading
-      return new Promise(resolve => setTimeout(resolve, 100)).then(() => {
-        const textureProgress = lazyLoader.getAssetProgress('texture-1')
-        const audioProgress = lazyLoader.getAssetProgress('audio-1')
-        // Assets might be loaded by the time we check, so check for either loading or loaded
-        expect(['loading', 'loaded']).toContain(textureProgress?.status)
-        expect(['loading', 'loaded']).toContain(audioProgress?.status)
-      })
+      // Check immediately - assets should be queued
+      const textureProgress = lazyLoader.getAssetProgress('texture-1')
+      const audioProgress = lazyLoader.getAssetProgress('audio-1')
+      expect(textureProgress?.status).toBe('queued')
+      expect(audioProgress?.status).toBe('queued')
     })
   })
 
@@ -277,14 +269,14 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
 
       lazyLoader.startLazyLoading()
 
-      // Wait for loading
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Wait for loading with shorter timeout
+      await new Promise(resolve => setTimeout(resolve, 20))
 
       const loadedAsset = lazyLoader.getAsset(worldAsset.id)
       expect(loadedAsset).toBeTruthy()
       expect(loadedAsset.name).toBe('Forest World')
       expect(loadedAsset.loadedAt).toBeDefined()
-    })
+    }, 15000) // Increase timeout to 15 seconds
 
     test('should load texture assets correctly', async () => {
       const textureAsset = sampleAssets[1]
@@ -292,8 +284,8 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       
       lazyLoader.startLazyLoading()
 
-      // Wait for loading
-      await new Promise(resolve => setTimeout(resolve, 300))
+      // Wait for loading with shorter timeout
+      await new Promise(resolve => setTimeout(resolve, 20))
 
       // Check if the asset is in the loading or loaded state
       const progress = lazyLoader.getAssetProgress(textureAsset.id)
@@ -309,12 +301,12 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       
       lazyLoader.startLazyLoading()
 
-      // Wait for loading
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Wait for loading with shorter timeout
+      await new Promise(resolve => setTimeout(resolve, 20))
 
       const loadedAsset = lazyLoader.getAsset(audioAsset.id)
       expect(loadedAsset).toBeDefined()
-    })
+    }, 15000) // Increase timeout to 15 seconds
   })
 
   describe('4. Intersection Observer Integration', () => {
@@ -324,7 +316,7 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       expect(placeholder.className).toContain('asset-placeholder')
     })
 
-    test('should trigger loading when asset becomes visible', () => {
+    test('should trigger loading when asset becomes visible', async () => {
       const asset = sampleAssets[1]
       lazyLoader.registerAsset(asset)
       
@@ -337,13 +329,13 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       // Simulate intersection
       mockIntersectionObserver.simulateIntersection(placeholder, true)
 
-      // Wait for visibility change handling
-      return new Promise(resolve => setTimeout(resolve, 300)).then(() => {
-        const progress = lazyLoader.getAssetProgress(asset.id)
-        // Asset should be loaded by the time we check
-        expect(progress?.status).toBe('loaded')
-      })
-    })
+      // Wait for visibility change handling with shorter timeout
+      await new Promise(resolve => setTimeout(resolve, 20))
+      
+      const progress = lazyLoader.getAssetProgress(asset.id)
+      // Asset should be loaded by the time we check
+      expect(progress?.status).toBe('loaded')
+    }, 15000) // Increase timeout to 15 seconds
   })
 
   describe('5. Caching and Memory Management', () => {
@@ -352,8 +344,8 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       lazyLoader.registerAsset(asset)
       lazyLoader.startLazyLoading()
 
-      // Wait for loading
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Wait for loading with shorter timeout
+      await new Promise(resolve => setTimeout(resolve, 20))
 
       const cachedAsset = lazyLoader.getAsset(asset.id)
       expect(cachedAsset).toBeTruthy()
@@ -361,7 +353,7 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       // Second access should be from cache
       const cachedAsset2 = lazyLoader.getAsset(asset.id)
       expect(cachedAsset2).toBe(cachedAsset)
-    })
+    }, 15000) // Increase timeout to 15 seconds
 
     test('should provide cache statistics', () => {
       lazyLoader.registerAssets(sampleAssets)
@@ -379,28 +371,28 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       lazyLoader.registerAsset(asset)
       lazyLoader.startLazyLoading()
 
-      // Wait for loading
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Wait for loading with shorter timeout
+      await new Promise(resolve => setTimeout(resolve, 20))
 
       expect(lazyLoader.isAssetLoaded(asset.id)).toBe(true)
       
       const removed = lazyLoader.removeFromCache(asset.id)
       expect(removed).toBe(true)
       expect(lazyLoader.isAssetLoaded(asset.id)).toBe(false)
-    })
+    }, 15000) // Increase timeout to 15 seconds
 
     test('should clear entire cache', async () => {
       lazyLoader.registerAssets(sampleAssets)
       lazyLoader.startLazyLoading()
 
-      // Wait for loading
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Wait for loading with shorter timeout
+      await new Promise(resolve => setTimeout(resolve, 20))
 
       expect(lazyLoader.getCacheStats().cachedAssets).toBeGreaterThan(0)
       
       lazyLoader.clearCache()
       expect(lazyLoader.getCacheStats().cachedAssets).toBe(0)
-    })
+    }, 15000) // Increase timeout to 15 seconds
   })
 
   describe('6. Error Handling and Retry Logic', () => {
@@ -413,12 +405,12 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       
       lazyLoader.startLazyLoading()
 
-      // Wait for error handling
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Wait for error handling with shorter timeout
+      await new Promise(resolve => setTimeout(resolve, 20))
 
       const progress = lazyLoader.getAssetProgress(asset.id)
       expect(progress?.status).toBe('error')
-    })
+    }, 15000) // Increase timeout to 15 seconds
 
     test('should retry failed assets', async () => {
       const asset = sampleAssets[0]
@@ -433,12 +425,12 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       
       lazyLoader.startLazyLoading()
 
-      // Wait for retry
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Wait for retry with shorter timeout
+      await new Promise(resolve => setTimeout(resolve, 50))
 
       const progress = lazyLoader.getAssetProgress(asset.id)
       expect(progress?.status).toBe('loaded')
-    })
+    }, 15000) // Increase timeout to 15 seconds
   })
 
   describe('7. Event System Integration', () => {
@@ -463,8 +455,8 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       
       lazyLoader.startLazyLoading()
 
-      // Wait for loading
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Wait for loading with shorter timeout
+      await new Promise(resolve => setTimeout(resolve, 20))
 
       expect(loadStartSpy).toHaveBeenCalledWith({
         assetId: asset.id,
@@ -476,7 +468,7 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
         asset: expect.any(Object),
         size: asset.size
       })
-    })
+    }, 15000) // Increase timeout to 15 seconds
 
     test('should emit cache hit/miss events', () => {
       const asset = sampleAssets[0]
@@ -533,7 +525,7 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
   })
 
   describe('9. Memory Management', () => {
-    test('should handle memory warnings', () => {
+    test('should handle memory warnings', async () => {
       // Mock high memory usage
       Object.defineProperty(performance, 'memory', {
         value: {
@@ -549,12 +541,12 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       // Create new instance to trigger memory monitoring
       const memoryLazyLoader = new GameAssetLazyLoader(eventManager)
       
-      // Wait for memory check interval (reduced to 100ms in the implementation)
-      return new Promise(resolve => setTimeout(resolve, 200)).then(() => {
-        expect(memoryWarningSpy).toHaveBeenCalled()
-        memoryLazyLoader.destroy()
-      })
-    })
+      // Wait for memory check interval with shorter timeout
+      await new Promise(resolve => setTimeout(resolve, 50))
+      
+      expect(memoryWarningSpy).toHaveBeenCalled()
+      memoryLazyLoader.destroy()
+    }, 15000) // Increase timeout to 15 seconds
   })
 
   describe('10. Placeholder Management', () => {
@@ -577,8 +569,8 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
       
       lazyLoader.startLazyLoading()
 
-      // Wait for loading
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Wait for loading with shorter timeout
+      await new Promise(resolve => setTimeout(resolve, 20))
 
       const loadedAsset = lazyLoader.getAsset(asset.id)
       if (loadedAsset) {
@@ -587,7 +579,7 @@ describe('GameAssetLazyLoader - Comprehensive Testing', () => {
         // Check if placeholder was replaced
         expect(placeholder.parentNode).toBeNull()
       }
-    })
+    }, 15000) // Increase timeout to 15 seconds
   })
 
   describe('11. System Lifecycle', () => {

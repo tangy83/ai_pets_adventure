@@ -352,7 +352,7 @@ export class LevelLoader {
     // Apply difficulty scaling to mechanics
     this.applyDifficultyScaling(level, difficultyMultiplier)
     
-    // Update level state
+    // Update level state with proper type assertions
     level.mechanics.puzzles.difficulty = this.scalePuzzleDifficulty(level.mechanics.puzzles.difficulty, difficultyMultiplier)
     level.mechanics.enemies.difficulty = this.scaleEnemyDifficulty(level.mechanics.enemies.difficulty, difficultyMultiplier)
     
@@ -365,7 +365,12 @@ export class LevelLoader {
   public validateLevel(levelId: string): LevelValidationResult {
     const level = this.activeLevels.get(levelId)
     if (!level) {
-      return { isValid: false, errors: ['Level not found'] }
+      return { 
+        isValid: false, 
+        errors: ['Level not found'], 
+        warnings: [], 
+        recoveryAttempted: false 
+      }
     }
 
     const errors: string[] = []
@@ -472,6 +477,7 @@ export class LevelLoader {
       ...template,
       id: levelId,
       questId,
+      difficulty: template.baseDifficulty, // Map baseDifficulty to difficulty
       state: {
         isLoaded: false,
         isActive: false,
@@ -633,9 +639,11 @@ export class LevelLoader {
     level.mechanics.collectibles.spawnRate *= multiplier
   }
 
-  private scalePuzzleDifficulty(baseDifficulty: string, multiplier: number): string {
-    const difficulties = ['easy', 'medium', 'hard', 'expert']
-    const baseIndex = difficulties.indexOf(baseDifficulty)
+  private scalePuzzleDifficulty(baseDifficulty: string, multiplier: number): 'easy' | 'medium' | 'hard' | 'expert' {
+    const difficulties: ('easy' | 'medium' | 'hard' | 'expert')[] = ['easy', 'medium', 'hard', 'expert']
+    const baseIndex = difficulties.indexOf(baseDifficulty as 'easy' | 'medium' | 'hard' | 'expert')
+    
+    if (baseIndex === -1) return 'medium' // Default fallback
     
     if (multiplier > 1.5) {
       return difficulties[Math.min(baseIndex + 1, difficulties.length - 1)]
@@ -643,10 +651,10 @@ export class LevelLoader {
       return difficulties[Math.max(baseIndex - 1, 0)]
     }
     
-    return baseDifficulty
+    return difficulties[baseIndex]
   }
 
-  private scaleEnemyDifficulty(baseDifficulty: string, multiplier: number): string {
+  private scaleEnemyDifficulty(baseDifficulty: string, multiplier: number): 'easy' | 'medium' | 'hard' | 'expert' {
     return this.scalePuzzleDifficulty(baseDifficulty, multiplier)
   }
 

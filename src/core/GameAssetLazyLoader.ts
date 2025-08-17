@@ -47,17 +47,17 @@ export class GameAssetLazyLoader {
   private totalLoaded: number = 0
   private totalSize: number = 0
 
-  // Event types
+  // Event types - using exact keys from GameEvents interface
   static readonly EVENTS = {
-    ASSET_LOAD_START: 'asset:load:start',
-    ASSET_LOAD_PROGRESS: 'asset:load:progress',
-    ASSET_LOAD_COMPLETE: 'asset:load:complete',
-    ASSET_LOAD_ERROR: 'asset:load:error',
-    ASSET_CACHE_HIT: 'asset:cache:hit',
-    ASSET_CACHE_MISS: 'asset:cache:miss',
-    ASSET_VISIBILITY_CHANGE: 'asset:visibility:change',
-    BATCH_COMPLETE: 'batch:complete',
-    MEMORY_WARNING: 'memory:warning'
+    ASSET_LOAD_START: 'asset:load:start' as const,
+    ASSET_LOAD_PROGRESS: 'asset:load:progress' as const,
+    ASSET_LOAD_COMPLETE: 'asset:load:complete' as const,
+    ASSET_LOAD_ERROR: 'asset:load:error' as const,
+    ASSET_CACHE_HIT: 'asset:cache:hit' as const,
+    ASSET_CACHE_MISS: 'asset:cache:miss' as const,
+    ASSET_VISIBILITY_CHANGE: 'asset:visibility:change' as const,
+    BATCH_COMPLETE: 'batch:complete' as const,
+    MEMORY_WARNING: 'memory:warning' as const
   }
 
   constructor(eventManager: EventManager, config?: Partial<LazyLoadConfig>) {
@@ -224,7 +224,7 @@ export class GameAssetLazyLoader {
   public clearCache(): void {
     this.loadedAssets.clear()
     this.totalLoaded = 0
-    this.eventManager.emit('cache:cleared', { timestamp: Date.now(), clearedAssets: this.loadedAssets.size, timestamp: Date.now() })
+    this.eventManager.emit('asset:cache:cleared', { timestamp: Date.now() })
   }
 
   /**
@@ -306,7 +306,12 @@ export class GameAssetLazyLoader {
       setInterval(() => {
         const memory = (performance as any).memory
         if (memory && memory.usedJSHeapSize > memory.jsHeapSizeLimit * 0.8) {
-          this.eventManager.emit(GameAssetLazyLoader.EVENTS.MEMORY_WARNING, { memory, timestamp: Date.now() })
+          this.eventManager.emit(GameAssetLazyLoader.EVENTS.MEMORY_WARNING, { 
+            message: 'Memory usage high', 
+            currentUsage: memory.usedJSHeapSize, 
+            threshold: memory.jsHeapSizeLimit * 0.8, 
+            timestamp: Date.now() 
+          })
           this.handleMemoryWarning()
         }
       }, 100) // Reduced interval for testing
@@ -317,7 +322,7 @@ export class GameAssetLazyLoader {
     const asset = this.assetQueue.get(assetId)
     if (asset && !this.loadedAssets.has(assetId) && !this.loadingAssets.has(assetId)) {
       this.addToLoadQueue(assetId)
-      this.eventManager.emit(GameAssetLazyLoader.EVENTS.ASSET_VISIBILITY_CHANGE, { assetId, visible: true, timestamp: Date.now() })
+      this.eventManager.emit(GameAssetLazyLoader.EVENTS.ASSET_VISIBILITY_CHANGE, { assetId, isVisible: true, timestamp: Date.now() })
     }
   }
 
@@ -336,7 +341,11 @@ export class GameAssetLazyLoader {
 
     try {
       await Promise.allSettled(promises)
-      this.eventManager.emit(GameAssetLazyLoader.EVENTS.BATCH_COMPLETE, { batchSize: batch.length, timestamp: Date.now() })
+      this.eventManager.emit(GameAssetLazyLoader.EVENTS.BATCH_COMPLETE, { 
+        batchSize: batch.length, 
+        completedAssets: batch, 
+        timestamp: Date.now() 
+      })
       
       // Continue processing if there are more items
       if (this.loadQueue.length > 0) {
@@ -372,7 +381,7 @@ export class GameAssetLazyLoader {
       this.eventManager.emit(GameAssetLazyLoader.EVENTS.ASSET_LOAD_COMPLETE, { 
         assetId, 
         asset: loadedAsset,
-        size: asset.size 
+        timestamp: Date.now()
       })
 
     } catch (error) {
@@ -381,7 +390,8 @@ export class GameAssetLazyLoader {
       
       this.eventManager.emit(GameAssetLazyLoader.EVENTS.ASSET_LOAD_ERROR, { 
         assetId, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: Date.now()
       })
 
       // Retry logic

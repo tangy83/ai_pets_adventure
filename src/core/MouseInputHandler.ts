@@ -26,7 +26,7 @@ export interface MouseConfig {
   enableAccessibility: boolean
 }
 
-export interface MouseEvent {
+export interface CustomMouseEvent {
   type: 'click' | 'doubleClick' | 'rightClick' | 'middleClick' | 'dragStart' | 'dragMove' | 'dragEnd' | 'hover' | 'hoverEnd' | 'wheel'
   button: number
   x: number
