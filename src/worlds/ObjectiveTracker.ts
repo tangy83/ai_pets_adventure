@@ -113,8 +113,8 @@ export class ObjectiveTracker {
     this.isInitialized = true
     
     this.eventManager.emit('objectiveTrackerInitialized', {
-      timestamp: Date.now(),
-      config: this.config
+      playerId: 'system', // System-wide initialization
+      timestamp: Date.now()
     })
   }
 
@@ -156,10 +156,8 @@ export class ObjectiveTracker {
     this.addPlayerObjective(playerId, progressKey)
     
     this.eventManager.emit('objectiveTrackingStarted', {
-      objectiveId,
       questId,
-      playerId,
-      progress,
+      objectiveId,
       timestamp: Date.now()
     })
   }
@@ -222,12 +220,7 @@ export class ObjectiveTracker {
     // Emit progress update event
     this.eventManager.emit('objectiveProgressUpdated', {
       objectiveId,
-      questId,
-      playerId,
-      oldProgress,
-      newProgress: objectiveProgress.current,
-      percentage: objectiveProgress.percentage,
-      isCompleted: objectiveProgress.isCompleted,
+      progress: objectiveProgress.current,
       timestamp: Date.now()
     })
 
@@ -302,9 +295,6 @@ export class ObjectiveTracker {
     
     this.eventManager.emit('objectiveHintProvided', {
       objectiveId,
-      questId,
-      playerId,
-      hintIndex,
       hint,
       timestamp: Date.now()
     })
@@ -345,8 +335,6 @@ export class ObjectiveTracker {
 
     this.eventManager.emit('objectiveReset', {
       objectiveId,
-      questId,
-      playerId,
       timestamp: Date.now()
     })
 
@@ -562,10 +550,8 @@ export class ObjectiveTracker {
     this.eventManager.emit('objectiveCompleted', {
       objectiveId: progress.objectiveId,
       questId: progress.questId,
+      player: { id: playerId, level: 1 }, // Basic player info
       playerId,
-      completionTime: progress.timeCompleted!,
-      timeSpent: progress.timeSpent,
-      attempts: progress.attempts,
       timestamp: Date.now()
     })
   }
@@ -584,11 +570,7 @@ export class ObjectiveTracker {
         
         this.eventManager.emit('objectiveMilestoneReached', {
           objectiveId: progress.objectiveId,
-          questId: progress.questId,
-          playerId,
-          milestoneId: milestone.id,
-          percentage: milestone.percentage,
-          reward: milestone.reward,
+          milestone: milestone.id,
           timestamp: Date.now()
         })
       }
@@ -713,9 +695,8 @@ export class ObjectiveTracker {
     // Auto-save functionality can be implemented here
     // For now, just emit an event
     this.eventManager.emit('objectiveTrackerAutoSave', {
-      timestamp: Date.now(),
-      objectiveCount: this.objectiveProgress.size,
-      playerCount: this.playerObjectives.size
+      playerId: 'system', // System-wide auto-save
+      timestamp: Date.now()
     })
   }
 }

@@ -461,7 +461,7 @@ export class CheckpointSystem {
         // Safely reconstruct the Map from stored data
         if (data.checkpoints && Array.isArray(data.checkpoints)) {
           this.checkpoints = new Map()
-          data.checkpoints.forEach(([id, checkpoint]) => {
+          data.checkpoints.forEach(([id, checkpoint]: [string, any]) => {
             if (id && checkpoint && checkpoint.name) {
               this.checkpoints.set(id, checkpoint)
             }

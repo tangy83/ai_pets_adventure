@@ -289,16 +289,17 @@ export class ChunkManagerDemo {
     })
     
     // Monitor asset compression events
-    this.eventManager.on('assetCompressed', ({ assetId, result, timestamp }) => {
+    this.eventManager.on('assetCompressed', ({ assetId, compressionRatio, timestamp }) => {
       console.log(`🗜️ Asset compressed: ${assetId}`, {
+        compressionRatio,
         timestamp: new Date(timestamp).toLocaleTimeString()
       })
     })
     
     // Monitor progressive tier creation
-    this.eventManager.on('progressiveTiersCreated', ({ assetId, tiers, timestamp }) => {
+    this.eventManager.on('progressiveTiersCreated', ({ assetId, tierCount, timestamp }) => {
       console.log(`🎨 Progressive tiers created: ${assetId}`, {
-        tierCount: tiers.length,
+        tierCount,
         timestamp: new Date(timestamp).toLocaleTimeString()
       })
     })

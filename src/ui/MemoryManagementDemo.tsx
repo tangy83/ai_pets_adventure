@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { MemoryManagement, TextureAtlasConfig, ObjectPoolConfig, MemoryStats } from '../core/MemoryManagement'
-import { EventManager } from '../core/EventManager'
+import { EventManager, GameEvents } from '../core/EventManager'
 import './MemoryManagementDemo.css'
 
 interface TextureAtlasInfo {
@@ -53,7 +53,7 @@ export const MemoryManagementDemo: React.FC = () => {
   })
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number | null>(null)
 
   useEffect(() => {
     // Setup event listeners
@@ -91,8 +91,12 @@ export const MemoryManagementDemo: React.FC = () => {
       }
     }
 
+    const subscriptions: string[] = []
     Object.entries(eventHandlers).forEach(([event, handler]) => {
-      eventManager.on(event, handler)
+      const subscriptionId = eventManager.on(event as any, handler)
+      if (subscriptionId) {
+        subscriptions.push(subscriptionId)
+      }
     })
 
     // Start monitoring
@@ -102,8 +106,8 @@ export const MemoryManagementDemo: React.FC = () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
-      Object.entries(eventHandlers).forEach(([event, handler]) => {
-        eventManager.off(event, handler)
+      subscriptions.forEach(subscriptionId => {
+        eventManager.off(subscriptionId)
       })
     }
   }, [eventManager, memoryManagement])

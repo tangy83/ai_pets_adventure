@@ -173,11 +173,13 @@ export class ClientSideAIProcessor extends BaseSystem {
     this.initializeSystem()
     
     // Emit initialization event immediately (synchronous)
-    this.eventManager.emit('client:ai:initialized', {
-      timestamp: Date.now(),
-      modelsLoaded: 0, // Will be updated when models are loaded
-      capabilities: this.config.offlineCapabilities
-    })
+    if (this.eventManager) {
+      this.eventManager.emit('client:ai:initialized', {
+        timestamp: Date.now(),
+        modelsLoaded: 0, // Will be updated when models are loaded
+        capabilities: this.config.offlineCapabilities
+      })
+    }
   }
 
   // ============================================================================
@@ -202,26 +204,29 @@ export class ClientSideAIProcessor extends BaseSystem {
       this.setupOfflineDetection()
       
       this.isInitialized = true
-      this.log('info', 'Client-side AI processor initialized successfully')
+      this.log('Client-side AI processor initialized successfully', 'info')
       
       // Update the initialization event with actual model count
-      this.eventManager.emit('client:ai:initialized', {
-        timestamp: Date.now(),
-        modelsLoaded: this.models.size,
-        capabilities: this.config.offlineCapabilities
-      })
+      if (this.eventManager) {
+        this.eventManager.emit('client:ai:initialized', {
+          timestamp: Date.now(),
+          modelsLoaded: this.models.size,
+          capabilities: this.config.offlineCapabilities
+        })
+      }
       
-      this.log('info', 'Initialization event updated with model count')
+      this.log('Initialization event updated with model count', 'info')
     } catch (error) {
-      this.log('error', `Failed to initialize client-side AI processor: ${error}`)
+      this.log(`Failed to initialize client-side AI processor: ${error}`, 'error')
       
       // Even if initialization fails, emit the event to indicate system state
-      this.eventManager.emit('client:ai:initialized', {
-        timestamp: Date.now(),
-        modelsLoaded: 0,
-        capabilities: this.config.offlineCapabilities,
-        error: String(error)
-      })
+      if (this.eventManager) {
+        this.eventManager.emit('client:ai:initialized', {
+          timestamp: Date.now(),
+          modelsLoaded: 0,
+          capabilities: this.config.offlineCapabilities
+        })
+      }
       
       throw error
     }
@@ -235,25 +240,25 @@ export class ClientSideAIProcessor extends BaseSystem {
       // Enable GPU if available and configured
       if (this.config.aiModel.enableGPU && this.tf.getBackend('gpu')) {
         await this.tf.setBackend('gpu')
-        this.log('info', 'GPU backend enabled for TensorFlow.js')
+        this.log('GPU backend enabled for TensorFlow.js', 'info')
       } else {
         await this.tf.setBackend('cpu')
-        this.log('info', 'CPU backend enabled for TensorFlow.js')
+        this.log('CPU backend enabled for TensorFlow.js', 'info')
       }
 
       // Set memory management
       this.tf.engine().startScope()
       
-      this.log('info', `TensorFlow.js initialized with backend: ${this.tf.getBackend()}`)
+      this.log(`TensorFlow.js initialized with backend: ${this.tf.getBackend()}`, 'info')
     } catch (error) {
-      this.log('warn', `TensorFlow.js not available, falling back to basic AI: ${error}`)
+      this.log(`TensorFlow.js not available, falling back to basic AI: ${error}`, 'warn')
       this.tf = null
     }
   }
 
   private async loadDefaultModels(): Promise<void> {
     if (!this.tf) {
-      this.log('warn', 'TensorFlow.js not available, skipping model loading')
+      this.log('TensorFlow.js not available, skipping model loading', 'warn')
       return
     }
 
@@ -282,7 +287,7 @@ export class ClientSideAIProcessor extends BaseSystem {
       try {
         await this.loadModel(modelInfo.id, modelInfo.name, modelInfo.type, modelInfo.path)
       } catch (error) {
-        this.log('warn', `Failed to load model ${modelInfo.id}: ${error}`)
+        this.log(`Failed to load model ${modelInfo.id}: ${error}`, 'warn')
       }
     }
   }
@@ -293,7 +298,7 @@ export class ClientSideAIProcessor extends BaseSystem {
 
   public async loadModel(id: string, name: string, type: AIModel['type'], modelPath: string): Promise<boolean> {
     if (!this.tf) {
-      this.log('warn', 'TensorFlow.js not available for model loading')
+      this.log('TensorFlow.js not available for model loading', 'warn')
       return false
     }
 
@@ -322,17 +327,19 @@ export class ClientSideAIProcessor extends BaseSystem {
 
       this.models.set(id, aiModel)
       
-      this.log('info', `Model ${name} loaded successfully`)
+      this.log(`Model ${name} loaded successfully`, 'info')
       
-      this.eventManager.emit('client:ai:model:loaded', {
-        modelId: id,
-        modelName: name,
-        timestamp: Date.now()
-      })
+      if (this.eventManager) {
+        this.eventManager.emit('client:ai:model:loaded', {
+          modelId: id,
+          modelName: name,
+          timestamp: Date.now()
+        })
+      }
 
       return true
     } catch (error) {
-      this.log('error', `Failed to load model ${id}: ${error}`)
+              this.log(`Failed to load model ${id}: ${error}`, 'error')
       return false
     }
   }
@@ -352,16 +359,18 @@ export class ClientSideAIProcessor extends BaseSystem {
       
       this.models.delete(id)
       
-      this.log('info', `Model ${id} unloaded successfully`)
+      this.log(`Model ${id} unloaded successfully`, 'info')
       
-      this.eventManager.emit('client:ai:model:unloaded', {
-        modelId: id,
-        timestamp: Date.now()
-      })
+      if (this.eventManager) {
+        this.eventManager.emit('client:ai:model:unloaded', {
+          modelId: id,
+          timestamp: Date.now()
+        })
+      }
 
       return true
     } catch (error) {
-      this.log('error', `Failed to unload model ${id}: ${error}`)
+              this.log(`Failed to unload model ${id}: ${error}`, 'error')
       return false
     }
   }
@@ -394,23 +403,25 @@ export class ClientSideAIProcessor extends BaseSystem {
       this.localLearningData = this.localLearningData.slice(-this.config.localLearning.maxLocalModels * 100)
     }
 
-    this.eventManager.emit('client:ai:learning:recorded', {
-      experienceId: learningData.id,
-      context,
-      success,
-      timestamp: Date.now()
-    })
+    if (this.eventManager) {
+      this.eventManager.emit('client:ai:learning:recorded', {
+        experienceId: learningData.id,
+        context,
+        success,
+        timestamp: Date.now()
+      })
+    }
   }
 
   public async trainLocalModel(modelId: string): Promise<boolean> {
     if (!this.tf) {
-      this.log('warn', 'TensorFlow.js not available for local training')
+      this.log('TensorFlow.js not available for local training', 'warn')
       return false
     }
 
     const model = this.models.get(modelId)
     if (!model || model.type !== 'learning') {
-      this.log('warn', `Model ${modelId} not available or not a learning model`)
+      this.log(`Model ${modelId} not available or not a learning model`, 'warn')
       return false
     }
 
@@ -418,7 +429,7 @@ export class ClientSideAIProcessor extends BaseSystem {
       // Prepare training data
       const trainingData = this.prepareTrainingData()
       if (trainingData.inputs.length === 0) {
-        this.log('warn', 'No training data available')
+        this.log('No training data available', 'warn')
         return false
       }
 
@@ -433,7 +444,7 @@ export class ClientSideAIProcessor extends BaseSystem {
         validationSplit: this.config.localLearning.validationSplit,
         callbacks: {
           onEpochEnd: (epoch: number, logs: any) => {
-            this.log('info', `Epoch ${epoch + 1}: loss = ${logs.loss.toFixed(4)}, accuracy = ${logs.acc.toFixed(4)}`)
+            this.log(`Epoch ${epoch + 1}: loss = ${logs.loss.toFixed(4)}, accuracy = ${logs.acc.toFixed(4)}`, 'info')
           }
         }
       })
@@ -447,17 +458,19 @@ export class ClientSideAIProcessor extends BaseSystem {
       xs.dispose()
       ys.dispose()
 
-      this.log('info', `Local training completed for model ${modelId}`)
+      this.log(`Local training completed for model ${modelId}`, 'info')
       
-      this.eventManager.emit('client:ai:learning:training:completed', {
-        modelId,
-        accuracy: model.metadata.accuracy,
-        timestamp: Date.now()
-      })
+      if (this.eventManager) {
+        this.eventManager.emit('client:ai:learning:training:completed', {
+          modelId,
+          accuracy: model.metadata.accuracy,
+          timestamp: Date.now()
+        })
+      }
 
       return true
     } catch (error) {
-      this.log('error', `Local training failed for model ${modelId}: ${error}`)
+              this.log(`Local training failed for model ${modelId}: ${error}`, 'error')
       return false
     }
   }
@@ -520,7 +533,7 @@ export class ClientSideAIProcessor extends BaseSystem {
       return
     }
 
-    this.log('info', `Starting cloud sync for ${this.cloudSyncQueue.length} items`)
+          this.log(`Starting cloud sync for ${this.cloudSyncQueue.length} items`, 'info')
 
     for (const syncItem of this.cloudSyncQueue) {
       try {
@@ -530,21 +543,25 @@ export class ClientSideAIProcessor extends BaseSystem {
         await this.simulateCloudSync(syncItem)
         
         syncItem.status = 'completed'
-        this.log('info', `Cloud sync completed for model ${syncItem.modelId}`)
+        this.log(`Cloud sync completed for model ${syncItem.modelId}`, 'info')
         
-        this.eventManager.emit('client:ai:cloud:sync:completed', {
-          modelId: syncItem.modelId,
-          timestamp: Date.now()
-        })
+        if (this.eventManager) {
+          this.eventManager.emit('client:ai:cloud:sync:completed', {
+            modelId: syncItem.modelId,
+            timestamp: Date.now()
+          })
+        }
       } catch (error) {
         syncItem.status = 'failed'
-        this.log('error', `Cloud sync failed for model ${syncItem.modelId}: ${error}`)
+        this.log(`Cloud sync failed for model ${syncItem.modelId}: ${error}`, 'error')
         
-        this.eventManager.emit('client:ai:cloud:sync:failed', {
-          modelId: syncItem.modelId,
-          error: String(error),
-          timestamp: Date.now()
-        })
+        if (this.eventManager) {
+          this.eventManager.emit('client:ai:cloud:sync:failed', {
+            modelId: syncItem.modelId,
+            error: String(error),
+            timestamp: Date.now()
+          })
+        }
       }
     }
 
@@ -581,11 +598,13 @@ export class ClientSideAIProcessor extends BaseSystem {
       this.cloudSyncQueue.push(syncData)
     }
 
-    this.eventManager.emit('client:ai:cloud:sync:queued', {
-      modelId,
-      changesCount: changes.length,
-      timestamp: Date.now()
-    })
+    if (this.eventManager) {
+      this.eventManager.emit('client:ai:cloud:sync:queued', {
+        modelId,
+        changesCount: changes.length,
+        timestamp: Date.now()
+      })
+    }
   }
 
   // ============================================================================
@@ -622,10 +641,12 @@ export class ClientSideAIProcessor extends BaseSystem {
       this.adjustAIComplexity()
     }
 
-    this.eventManager.emit('client:ai:performance:updated', {
-      metrics: this.performanceMetrics,
-      timestamp: Date.now()
-    })
+    if (this.eventManager) {
+      this.eventManager.emit('client:ai:performance:updated', {
+        metrics: this.performanceMetrics,
+        timestamp: Date.now()
+      })
+    }
   }
 
   private simulateProcessing(): void {
@@ -645,7 +666,7 @@ export class ClientSideAIProcessor extends BaseSystem {
 
   private adjustAIComplexity(): void {
     // Reduce AI complexity when performance is low
-    this.log('info', 'Adjusting AI complexity due to low performance')
+          this.log('Adjusting AI complexity due to low performance', 'info')
     
     // Reduce batch sizes
     this.config.localLearning.batchSize = Math.max(4, this.config.localLearning.batchSize / 2)
@@ -658,11 +679,13 @@ export class ClientSideAIProcessor extends BaseSystem {
       }, 2000) // Update every 2 seconds instead of 1
     }
 
-    this.eventManager.emit('client:ai:complexity:adjusted', {
-      reason: 'low_performance',
-      newBatchSize: this.config.localLearning.batchSize,
-      timestamp: Date.now()
-    })
+    if (this.eventManager) {
+      this.eventManager.emit('client:ai:complexity:adjusted', {
+        reason: 'low_performance',
+        newBatchSize: this.config.localLearning.batchSize,
+        timestamp: Date.now()
+      })
+    }
   }
 
   // ============================================================================
@@ -672,14 +695,18 @@ export class ClientSideAIProcessor extends BaseSystem {
   private setupOfflineDetection(): void {
     window.addEventListener('online', () => {
       this.isOnline = true
-      this.log('info', 'Connection restored, enabling cloud sync')
-      this.eventManager.emit('client:ai:connection:restored', { timestamp: Date.now() })
+      this.log('Connection restored, enabling cloud sync', 'info')
+      if (this.eventManager) {
+        this.eventManager.emit('client:ai:connection:restored', { timestamp: Date.now() })
+      }
     })
 
     window.addEventListener('offline', () => {
       this.isOnline = false
-      this.log('info', 'Connection lost, switching to offline mode')
-      this.eventManager.emit('client:ai:connection:lost', { timestamp: Date.now() })
+      this.log('Connection lost, switching to offline mode', 'info')
+      if (this.eventManager) {
+        this.eventManager.emit('client:ai:connection:lost', { timestamp: Date.now() })
+      }
     })
   }
 
@@ -704,7 +731,7 @@ export class ClientSideAIProcessor extends BaseSystem {
         return this.processWithFallbackLogic(input, context)
       }
     } catch (error) {
-      this.log('warn', `Offline AI processing failed: ${error}`)
+      this.log(`Offline AI processing failed: ${error}`, 'warn')
       
       // Use basic fallback
       return this.processWithFallbackLogic(input, context)
@@ -764,7 +791,7 @@ export class ClientSideAIProcessor extends BaseSystem {
       try {
         return await this.processWithModel(this.models.get('behavior-predictor')!, input)
       } catch (error) {
-        this.log('warn', `Online prediction failed, falling back to offline: ${error}`)
+        this.log(`Online prediction failed, falling back to offline: ${error}`, 'warn')
       }
     }
     
@@ -828,7 +855,7 @@ export class ClientSideAIProcessor extends BaseSystem {
     // Process cloud sync if needed
     if (this.isOnline && this.cloudSyncQueue.length > 0) {
       this.performCloudSync().catch(error => {
-        this.log('error', `Cloud sync update failed: ${error}`)
+        this.log(`Cloud sync update failed: ${error}`, 'error')
       })
     }
   }
@@ -845,7 +872,7 @@ export class ClientSideAIProcessor extends BaseSystem {
     // Unload all models
     for (const [modelId] of this.models) {
       this.unloadModel(modelId).catch(error => {
-        this.log('error', `Failed to unload model ${modelId}: ${error}`)
+        this.log(`Failed to unload model ${modelId}: ${error}`, 'error')
       })
     }
 
@@ -854,7 +881,7 @@ export class ClientSideAIProcessor extends BaseSystem {
       this.tf.engine().endScope()
     }
 
-    this.log('info', 'Client-side AI processor destroyed')
+    this.log('Client-side AI processor destroyed', 'info')
     super.destroy()
   }
 }

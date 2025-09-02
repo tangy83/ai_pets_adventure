@@ -172,7 +172,8 @@ export const GameAssetLazyLoaderDemo: React.FC = () => {
     preloadDistance: 100,
     cacheStrategy: 'memory',
     retryAttempts: 3,
-    retryDelay: 1000
+    retryDelay: 1000,
+    processingDelay: 50
   })
   const [isLazyLoading, setIsLazyLoading] = useState(false)
   const [cacheStats, setCacheStats] = useState({
@@ -276,7 +277,7 @@ export const GameAssetLazyLoaderDemo: React.FC = () => {
     ]
 
     eventHandlers.forEach(eventType => {
-      eventManager.on(eventType, (data) => {
+      eventManager.on(eventType as any, (data) => {
         setEvents(prev => [`${eventType}: ${JSON.stringify(data)}`, ...prev.slice(0, 19)])
       })
     })

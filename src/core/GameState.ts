@@ -266,7 +266,8 @@ export class GameState {
       this.eventManager.emit('questStarted', {
         questId,
         previousQuest: oldQuest,
-        player: this.state.player
+        player: this.state.player,
+        timestamp: Date.now()
       })
       
       return true

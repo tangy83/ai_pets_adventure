@@ -1,29 +1,28 @@
-const nextJest = require('next/jest')
-
-const createJestConfig = nextJest({
-  // Provide the path to your Next.js app to load next.config.js and .env files
-  dir: './',
-})
-
-// Add any custom config to be passed to Jest
-const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+module.exports = {
+  preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  testTimeout: 10000, // 10 second global timeout instead of 30
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
+  setupFilesAfterEnv: ['<rootDir>/../jest.setup.js'],
   testMatch: [
-    '**/__tests__/**/*.{test,spec}.{js,jsx,ts,tsx}',
-    '**/*.{test,spec}.{js,jsx,ts,tsx}'
+    '<rootDir>/../src/**/__tests__/**/*.{test,spec}.{js,jsx,ts,tsx}',
+    '<rootDir>/../src/**/*.{test,spec}.{js,jsx,ts,tsx}'
   ],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/../src/$1',
+  },
+  transform: {
+    '^.+\\.(ts|tsx)$': 'ts-jest',
+  },
+  testTimeout: 15000,
   collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
-    '!src/**/*.d.ts',
-    '!src/**/*.stories.{ts,tsx}',
+    '<rootDir>/../src/**/*.{ts,tsx}',
+    '!<rootDir>/../src/**/*.d.ts',
   ],
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
-}
-
-// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-module.exports = createJestConfig(customJestConfig) 
+  testPathIgnorePatterns: ['<rootDir>/../.next/', '<rootDir>/../node_modules/'],
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        jsx: 'react-jsx'
+      }
+    }
+  }
+} 

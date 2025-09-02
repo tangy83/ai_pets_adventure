@@ -111,9 +111,9 @@ export class DifficultyScalingDemo {
       
       // Show metrics
       const metrics = this.difficultyScaling.getPlayerMetrics(playerId)
-      console.log(`  Completion rate: ${(metrics?.questCompletionRate * 100).toFixed(1)}%`)
-      console.log(`  Average time: ${(metrics?.averageCompletionTime / 1000).toFixed(1)}s`)
-      console.log(`  Failure rate: ${(metrics?.failureRate * 100).toFixed(1)}%`)
+      console.log(`  Completion rate: ${((metrics?.questCompletionRate || 0) * 100).toFixed(1)}%`)
+      console.log(`  Average time: ${((metrics?.averageCompletionTime || 0) / 1000).toFixed(1)}s`)
+      console.log(`  Failure rate: ${((metrics?.failureRate || 0) * 100).toFixed(1)}%`)
     }
 
     console.log('')
@@ -147,7 +147,7 @@ export class DifficultyScalingDemo {
       
       // Show pet assistance metrics
       const metrics = this.difficultyScaling.getPlayerMetrics(playerId)
-      console.log(`  Pet assistance efficiency: ${(metrics?.petAssistanceEfficiency * 100).toFixed(1)}%`)
+      console.log(`  Pet assistance efficiency: ${((metrics?.petAssistanceEfficiency || 0) * 100).toFixed(1)}%`)
     }
 
     console.log('')
@@ -180,8 +180,8 @@ export class DifficultyScalingDemo {
       
       // Show progression
       const metrics = this.difficultyScaling.getPlayerMetrics(playerId)
-      console.log(`  Skill improvement: ${(metrics?.skillImprovement * 100).toFixed(1)}%`)
-      console.log(`  Completion rate: ${(metrics?.questCompletionRate * 100).toFixed(1)}%`)
+      console.log(`  Skill improvement: ${((metrics?.skillImprovement || 0) * 100).toFixed(1)}%`)
+      console.log(`  Completion rate: ${((metrics?.questCompletionRate || 0) * 100).toFixed(1)}%`)
       
       // Show difficulty adjustment
       const adjustedDifficulty = this.difficultyScaling.calculateAdjustedDifficulty('progression_quest', playerId)
@@ -240,7 +240,8 @@ export class DifficultyScalingDemo {
     this.eventManager.emit('questStarted', {
       questId,
       previousQuest: null,
-      player: { id: playerId }
+      player: { id: playerId },
+      timestamp: Date.now()
     })
 
     // Simulate success or failure based on completion rate
@@ -271,16 +272,20 @@ export class DifficultyScalingDemo {
   private simulatePetBehavior(playerId: string, intelligence: number, skillLevel: number): void {
     // Simulate pet skill usage
     this.eventManager.emit('petSkillUsed', {
-      playerId,
+      petId: 'demo_pet',
       skillId: 'demo_skill',
-      effectiveness: intelligence * skillLevel / 10
+      playerId,
+      effectiveness: intelligence * skillLevel / 10,
+      timestamp: Date.now()
     })
 
     // Simulate pet behavior change
     this.eventManager.emit('petBehaviorChanged', {
+      petId: 'demo_pet',
+      oldBehavior: 'default',
+      newBehavior: 'demo_behavior',
       playerId,
-      behaviorId: 'demo_behavior',
-      success: Math.random() < intelligence
+      timestamp: Date.now()
     })
   }
 

@@ -31,6 +31,9 @@ export class PlayerController {
   // Input state tracking
   private activeKeys: Set<string> = new Set()
   private keyStates: Map<string, boolean> = new Map()
+  
+  // Event subscription IDs
+  private eventSubscriptions: string[] = []
 
   constructor(player: Player, eventManager: EventManager, inputManager: InputManager) {
     this.player = player
@@ -57,14 +60,22 @@ export class PlayerController {
 
   private setupEventListeners(): void {
     // Listen for input events from the input manager
-    this.eventManager.on('inputAction', this.handleInputAction.bind(this))
+    this.eventSubscriptions.push(
+      this.eventManager.on('inputAction', this.handleInputAction.bind(this))
+    )
     
     // Listen for player state changes
-    this.eventManager.on('playerPositionChanged', this.handlePlayerPositionChanged.bind(this))
+    this.eventSubscriptions.push(
+      this.eventManager.on('playerPositionChanged', this.handlePlayerPositionChanged.bind(this))
+    )
     
     // Listen for game state changes
-    this.eventManager.on('gamePaused', this.handleGamePaused.bind(this))
-    this.eventManager.on('gameResumed', this.handleGameResumed.bind(this))
+    this.eventSubscriptions.push(
+      this.eventManager.on('gamePaused', this.handleGamePaused.bind(this))
+    )
+    this.eventSubscriptions.push(
+      this.eventManager.on('gameResumed', this.handleGameResumed.bind(this))
+    )
   }
 
   private setupInputMappings(): void {
@@ -171,9 +182,9 @@ export class PlayerController {
 
     // Emit movement event
     this.eventManager.emit('playerMovement', {
+      x: this.player.getPosition().x,
+      y: this.player.getPosition().y,
       direction,
-      isActive,
-      velocity: this.movementState.velocity,
       timestamp
     })
   }
@@ -186,7 +197,6 @@ export class PlayerController {
 
     // Emit jump event
     this.eventManager.emit('playerJump', {
-      force: this.jumpForce,
       timestamp
     })
 
@@ -205,7 +215,8 @@ export class PlayerController {
 
     // Emit interaction event
     this.eventManager.emit('playerInteraction', {
-      type: 'interact',
+      targetId: 'interact',
+      interactionType: 'interact',
       timestamp
     })
 
@@ -224,7 +235,8 @@ export class PlayerController {
 
     // Emit attack event
     this.eventManager.emit('playerAttack', {
-      type: 'attack',
+      targetId: 'attack',
+      attackType: 'attack',
       timestamp
     })
 
@@ -241,7 +253,7 @@ export class PlayerController {
 
     // Emit special ability event
     this.eventManager.emit('playerSpecialAbility', {
-      type: 'special',
+      abilityId: 'special',
       timestamp
     })
   }
@@ -266,8 +278,8 @@ export class PlayerController {
 
   private handlePlayerPositionChanged(event: any): void {
     // Update player position in the Player entity
-    const { x, y, world } = event
-    this.player.setPosition(x, y, world)
+    const { x, y } = event
+    this.player.setPosition(x, y, 'default')
   }
 
   private handleGamePaused(): void {
@@ -310,7 +322,6 @@ export class PlayerController {
     this.eventManager.emit('playerPositionChanged', {
       x: newX,
       y: newY,
-      world: currentPos.world,
       timestamp: performance.now()
     })
   }
@@ -380,10 +391,11 @@ export class PlayerController {
   }
 
   public destroy(): void {
-    this.eventManager.off('inputAction', this.handleInputAction.bind(this))
-    this.eventManager.off('playerPositionChanged', this.handlePlayerPositionChanged.bind(this))
-    this.eventManager.off('gamePaused', this.handleGamePaused.bind(this))
-    this.eventManager.off('gameResumed', this.handleGameResumed.bind(this))
+    // Unsubscribe from all events using stored subscription IDs
+    this.eventSubscriptions.forEach(subscriptionId => {
+      this.eventManager.off(subscriptionId)
+    })
+    this.eventSubscriptions = []
   }
 }
 

@@ -47,7 +47,7 @@ export class DifficultyScalingSystem {
   private static instance: DifficultyScalingSystem
   private eventManager: EventManager
   private questSystem: QuestSystem
-  private aiSystem: AISystem
+  private aiSystem?: AISystem
   
   // Performance tracking
   private playerMetrics: Map<string, PlayerPerformanceMetrics> = new Map()
@@ -113,15 +113,17 @@ export class DifficultyScalingSystem {
     })
   }
 
-  private initializePlayerMetrics(playerId: string): void {
-    this.playerMetrics.set(playerId, {
+  private initializePlayerMetrics(playerId: string): PlayerPerformanceMetrics {
+    const defaultMetrics: PlayerPerformanceMetrics = {
       questCompletionRate: 0.5, // Default to 50%
       averageCompletionTime: 300000, // 5 minutes default
       failureRate: 0.1, // 10% default
       skillImprovement: 0,
       petAssistanceEfficiency: 0.5,
       lastUpdated: Date.now()
-    })
+    }
+    this.playerMetrics.set(playerId, defaultMetrics)
+    return defaultMetrics
   }
 
   // Main difficulty adjustment method
@@ -133,7 +135,7 @@ export class DifficultyScalingSystem {
     const playerMetrics = this.playerMetrics.get(playerId) || this.initializePlayerMetrics(playerId)
     
     // Calculate difficulty factors
-    const factors = this.calculateDifficultyFactors(questId, playerId, playerMetrics)
+    const factors: DifficultyFactors = this.calculateDifficultyFactors(questId, playerId, playerMetrics)
     
     // Apply AI-based adjustment
     const adjustedDifficulty = this.applyDifficultyAdjustment(originalDifficulty, factors)
@@ -144,10 +146,11 @@ export class DifficultyScalingSystem {
     // Emit event for other systems
     this.eventManager.emit('difficultyAdjusted', {
       questId,
-      originalDifficulty,
-      adjustedDifficulty,
+      oldDifficulty: originalDifficulty,
+      newDifficulty: adjustedDifficulty,
       factors,
-      playerId
+      playerId,
+      timestamp: Date.now()
     })
     
     return Math.max(this.adaptiveConfig.minDifficulty, 

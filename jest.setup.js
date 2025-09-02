@@ -597,3 +597,38 @@ Object.defineProperty(window, 'installPrompt', {
   writable: true,
   configurable: true,
 })
+
+// Mock Gamepad API to prevent warnings
+Object.defineProperty(navigator, 'getGamepads', {
+  value: jest.fn(() => []),
+  writable: true,
+  configurable: true,
+})
+
+// Mock Web Audio API to prevent warnings
+Object.defineProperty(global.AudioContext.prototype, 'createGain', {
+  value: jest.fn(() => ({
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+    gain: { value: 1 },
+  })),
+  writable: true,
+  configurable: true,
+})
+
+// Suppress console warnings for expected test environment limitations
+const originalConsoleWarn = console.warn
+console.warn = (...args) => {
+  const message = args[0]
+  if (
+    typeof message === 'string' && (
+      message.includes('Web Audio API not supported') ||
+      message.includes('getGamepads is not a function') ||
+      message.includes('Audio context error')
+    )
+  ) {
+    // Suppress expected warnings in test environment
+    return
+  }
+  originalConsoleWarn.apply(console, args)
+}

@@ -30,7 +30,7 @@ export const NetworkEfficiencyDemo: React.FC = () => {
   const [isPreloading, setIsPreloading] = useState(false)
   const [testAssets] = useState(['test1.png', 'test2.png', 'test3.png', 'large-asset.bin', 'texture-pack.atlas'])
 
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number | null>(null)
 
   useEffect(() => {
     // Setup event listeners

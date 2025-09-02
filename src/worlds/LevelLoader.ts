@@ -271,7 +271,7 @@ export class LevelLoader {
       this.eventManager.emit('levelLoadCompleted', { level, questId, timestamp: Date.now() })
       return level
     } catch (error) {
-      this.eventManager.emit('levelLoadFailed', { levelId, questId, error, timestamp: Date.now() })
+      this.eventManager.emit('levelLoadFailed', { levelId, questId, error: String(error), timestamp: Date.now() })
       throw error
     }
   }
@@ -739,7 +739,7 @@ export class LevelLoader {
       await this.loadLevelAssets({ assets: template.assets } as LevelData, 'critical')
       this.eventManager.emit('levelPreloadCompleted', { levelId, timestamp: Date.now() })
     } catch (error) {
-      this.eventManager.emit('levelPreloadFailed', { levelId, error, timestamp: Date.now() })
+      this.eventManager.emit('levelPreloadFailed', { levelId, error: String(error), timestamp: Date.now() })
     }
   }
 

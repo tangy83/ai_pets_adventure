@@ -423,8 +423,8 @@ export class ChunkManager {
       this.handleAssetLoadFailure(assetId, error)
     })
     
-    this.eventManager.on('memoryWarning', ({ usage, threshold }) => {
-      this.handleMemoryWarning(usage, threshold)
+    this.eventManager.on('memory:warning', ({ currentUsage, threshold }) => {
+      this.handleMemoryWarning(currentUsage, threshold)
     })
   }
 
@@ -726,7 +726,7 @@ export class ChunkManager {
       
       this.eventManager.emit('progressiveTiersCreated', { 
         assetId: assetPath, 
-        tiers: Array.from(tiers.entries()), 
+        tierCount: tiers.size, 
         timestamp: Date.now() 
       })
       
@@ -749,7 +749,7 @@ export class ChunkManager {
       
       this.eventManager.emit('assetCompressed', { 
         assetId: assetPath, 
-        result: compressedAsset, 
+        compressionRatio: compressedAsset.compressionRatio, 
         timestamp: Date.now() 
       })
       

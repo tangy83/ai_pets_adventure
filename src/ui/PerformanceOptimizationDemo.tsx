@@ -36,7 +36,7 @@ export const PerformanceOptimizationDemo: React.FC = () => {
   const [objectPools, setObjectPools] = useState<Map<string, any[]>>(new Map())
   
   const containerRef = useRef<HTMLDivElement>(null)
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number | null>(null)
 
   useEffect(() => {
     // Set up event listeners
@@ -65,11 +65,11 @@ export const PerformanceOptimizationDemo: React.FC = () => {
       setBrowserCompatibility(performanceOptimization.checkBrowserCompatibility())
     }
 
-    eventManager.on('performanceUpdate', handlePerformanceUpdate)
-    eventManager.on('assetLoaded', handleAssetLoaded)
-    eventManager.on('assetLoadProgress', handleAssetLoadProgress)
-    eventManager.on('garbageCollection', handleGarbageCollection)
-    eventManager.on('browserAdaptation', handleBrowserAdaptation)
+    const performanceUpdateSub = eventManager.on('performanceUpdate', handlePerformanceUpdate)
+    const assetLoadedSub = eventManager.on('assetLoaded', handleAssetLoaded)
+    const assetLoadProgressSub = eventManager.on('assetLoadProgress', handleAssetLoadProgress)
+    const garbageCollectionSub = eventManager.on('garbageCollection', handleGarbageCollection)
+    const browserAdaptationSub = eventManager.on('browserAdaptation', handleBrowserAdaptation)
 
     // Start performance monitoring
     const updateMetrics = () => {
@@ -97,11 +97,11 @@ export const PerformanceOptimizationDemo: React.FC = () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
-      eventManager.off('performanceUpdate', handlePerformanceUpdate)
-      eventManager.off('assetLoaded', handleAssetLoaded)
-      eventManager.off('assetLoadProgress', handleAssetLoadProgress)
-      eventManager.off('garbageCollection', handleGarbageCollection)
-      eventManager.off('browserAdaptation', handleBrowserAdaptation)
+      eventManager.off(performanceUpdateSub)
+      eventManager.off(assetLoadedSub)
+      eventManager.off(assetLoadProgressSub)
+      eventManager.off(garbageCollectionSub)
+      eventManager.off(browserAdaptationSub)
     }
   }, [eventManager, performanceOptimization])
 

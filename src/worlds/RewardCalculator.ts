@@ -245,7 +245,7 @@ export class RewardCalculator {
       // Emit reward distributed event
       this.eventManager.emit('rewardsDistributed', {
         questId,
-        objectiveId,
+        objectiveId: objectiveId || 'main',
         playerId,
         rewards,
         timestamp: Date.now()
@@ -287,7 +287,7 @@ export class RewardCalculator {
         objectivesCompleted: 0,
         averageRewardValue: 0,
         highestRewardValue: 0,
-        lastRewardTimestamp: 0
+        lastRewardTime: 0
       }
       this.playerStats.set(playerId, stats)
     }
@@ -632,14 +632,14 @@ export class RewardCalculator {
   /**
    * Gets difficulty multiplier
    */
-  private getDifficultyMultiplier(difficulty: string): number {
+  private getDifficultyMultiplier(difficulty: 'easy' | 'medium' | 'hard' | 'expert'): number {
     const multipliers = {
       easy: 1.0,
       medium: 1.2,
       hard: 1.5,
       expert: 2.0
     }
-    return multipliers[difficulty] || 1.0
+    return multipliers[difficulty]
   }
 
   /**
@@ -973,7 +973,8 @@ export class RewardCalculator {
         playerId, 
         checkpointId, 
         checkpointName,
-        rewardCount: playerRewards.length 
+        rewardCount: playerRewards.length,
+        timestamp: Date.now()
       })
 
       return checkpointId
@@ -1002,7 +1003,8 @@ export class RewardCalculator {
       this.eventManager.emit('rewardsCheckpointRestored', { 
         playerId, 
         checkpointId,
-        restoredRewards: 0
+        restoredRewards: 0,
+        timestamp: Date.now()
       })
 
       return true

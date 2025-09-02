@@ -469,8 +469,8 @@ export class MouseInputHandler {
     }
   }
 
-  private emitMouseEvent(type: string, data: any): void {
-    // Emit to event manager
+  private emitMouseEvent(type: 'mouseDown' | 'mouseUp' | 'mouseMove' | 'mouseEnter' | 'mouseLeave' | 'click' | 'doubleClick' | 'rightClick' | 'middleClick' | 'dragStart' | 'dragMove' | 'dragEnd' | 'hover' | 'hoverEnd' | 'wheel', data: any): void {
+    // Emit to event manager with proper typing
     this.eventManager.emit(type, data)
     
     // Also emit as a general mouse event

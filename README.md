@@ -81,6 +81,8 @@ make logs
 - **System Documentation**: Check the `docs/` folder for detailed information about each system
 - **Implementation Plan**: See `docs/IMPLEMENTATION_PLAN.md` for the complete roadmap
 - **Docker Setup**: See `docs/README_DOCKER.md` for deployment instructions
+- **Troubleshooting**: See `docs/TROUBLESHOOTING.md` for common issues and solutions
+- **Quick Reference**: See `docs/TROUBLESHOOTING_QUICK_REFERENCE.md` for immediate fixes
 
 ## 🎮 Game Status
 
@@ -88,8 +90,10 @@ make logs
 ✅ **PWA Components**: READY  
 ✅ **Game Engine**: FUNCTIONAL  
 ✅ **Input Systems**: WORKING  
-✅ **Event System**: OPERATIONAL  
+⚠️ **Event System**: PARTIAL (Type mismatches)  
 ✅ **Reward Calculator**: WORKING  
+⚠️ **Phase 3.3 AI**: 60% COMPLETE  
+❌ **Build Status**: BLOCKED (238 TypeScript errors)  
 
 ## 🔧 Configuration
 
@@ -97,6 +101,26 @@ make logs
 - **Jest**: `config/jest.config.cjs`
 - **Next.js**: `config/next.config.js`
 - **Docker**: `deployment/docker-compose.yml`
+
+## 🚨 Troubleshooting
+
+### Common Issues
+- **Jest Configuration**: Multiple config files causing conflicts
+- **TypeScript Errors**: Event system type mismatches and property initialization
+- **Test Timeouts**: Async operations exceeding default timeouts
+- **Event System**: Missing event types and null safety issues
+
+### Quick Fixes
+```bash
+# Clear all caches and restart
+rm -rf node_modules/.cache tsconfig.tsbuildinfo
+npm test -- --clearCache
+npm install
+npm test
+```
+
+### Detailed Solutions
+See `docs/TROUBLESHOOTING.md` for comprehensive solutions and `docs/TROUBLESHOOTING_QUICK_REFERENCE.md` for immediate fixes.
 
 ## 📝 Notes
 

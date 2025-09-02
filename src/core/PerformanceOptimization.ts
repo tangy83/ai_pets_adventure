@@ -59,11 +59,11 @@ export interface PerformanceMetrics {
 
 export class PerformanceOptimization {
   private eventManager: EventManager
-  private assetConfig: AssetConfig
-  private audioConfig: AudioConfig
-  private lazyLoadConfig: LazyLoadConfig
-  private memoryConfig: MemoryConfig
-  private networkConfig: NetworkConfig
+  private assetConfig!: AssetConfig
+  private audioConfig!: AudioConfig
+  private lazyLoadConfig!: LazyLoadConfig
+  private memoryConfig!: MemoryConfig
+  private networkConfig!: NetworkConfig
   
   private performanceMetrics: PerformanceMetrics
   private assetCache: Map<string, any> = new Map()
@@ -161,7 +161,7 @@ export class PerformanceOptimization {
 
   private setupEventListeners(): void {
     this.eventManager.on('assetRequested', this.handleAssetRequest.bind(this))
-    this.eventManager.on('memoryWarning', this.handleMemoryWarning.bind(this))
+    this.eventManager.on('memory:warning', this.handleMemoryWarning.bind(this))
     this.eventManager.on('networkSlow', this.handleNetworkSlow.bind(this))
   }
 
@@ -322,7 +322,11 @@ export class PerformanceOptimization {
       this.eventManager.emit('assetLoaded', { assetId, loadTime, timestamp: Date.now() })
       return asset
     } catch (error) {
-      this.eventManager.emit('assetLoadError', { assetId, error, timestamp: Date.now() })
+      this.eventManager.emit('assetLoadError', { 
+        assetId, 
+        error: error instanceof Error ? error.message : String(error), 
+        timestamp: Date.now() 
+      })
       throw error
     }
   }
@@ -333,7 +337,7 @@ export class PerformanceOptimization {
       // Use the enhanced range request method for progressive loading
       const response = await fetch(`/assets/${assetId}`)
       if (!response.ok) {
-        throw new Error(`Failed to fetch asset: ${response.statusText}`)
+        throw new Error(`Failed to fetch asset: ${response.statusText || 'Unknown error'}`)
       }
       return response.arrayBuffer()
     } else {
@@ -531,9 +535,8 @@ export class PerformanceOptimization {
     }
 
     this.eventManager.emit('garbageCollection', {
-      timestamp: performance.now(),
-      cacheSize: this.assetCache.size,
-      poolCount: this.objectPools.size
+      freedMemory: this.assetCache.size + this.objectPools.size,
+      timestamp: performance.now()
     })
   }
 
@@ -606,12 +609,8 @@ export class PerformanceOptimization {
     }
 
     this.eventManager.emit('browserAdaptation', {
-      compatibility,
-      adaptedConfig: {
-        asset: this.assetConfig,
-        audio: this.audioConfig,
-        cache: this.networkConfig.cacheStrategy
-      }
+      adaptationType: 'browser_capability_adaptation',
+      timestamp: Date.now()
     })
   }
 
@@ -632,8 +631,8 @@ export class PerformanceOptimization {
     
     // Emit performance update
     this.eventManager.emit('performanceUpdate', {
-      metrics: this.performanceMetrics,
-      frameCount: this.frameCount,
+      fps: this.performanceMetrics.fps,
+      memoryUsage: this.performanceMetrics.memoryUsage,
       timestamp: currentTime
     })
   }
@@ -684,7 +683,6 @@ export class PerformanceOptimization {
       // Emit asset loaded event
       this.eventManager.emit('assetLoaded', {
         assetId,
-        size: result.byteLength,
         loadTime,
         timestamp: Date.now()
       })
@@ -759,8 +757,6 @@ export class PerformanceOptimization {
       // Emit progress event
       this.eventManager.emit('assetLoadProgress', {
         assetId,
-        loaded: chunks.length * chunkSize,
-        total: totalSize,
         progress: (chunks.length * chunkSize) / totalSize,
         timestamp: Date.now()
       })
@@ -916,10 +912,8 @@ export class PerformanceOptimization {
     }
 
     if (optimizations.length > 0) {
-      this.eventManager.emit('networkOptimized', {
-        previousLatency: currentLatency,
-        currentLatency: this.performanceMetrics.networkLatency,
-        optimizations,
+      this.eventManager.emit('networkSlow', {
+        latency: this.performanceMetrics.networkLatency,
         timestamp: Date.now()
       })
     }
@@ -958,9 +952,7 @@ export class PerformanceOptimization {
     return { ...this.memoryConfig }
   }
 
-  public setMemoryConfig(config: Partial<MemoryConfig>): void {
-    this.memoryConfig = { ...this.memoryConfig, ...config }
-  }
+
 
   public getNetworkConfig(): NetworkConfig {
     return { ...this.networkConfig }
@@ -1032,11 +1024,11 @@ export class PerformanceOptimization {
 
   private handleCompressionMessage(event: MessageEvent): void {
     // Handle compression worker messages
-    this.eventManager.emit('compressionComplete', event.data)
+          this.eventManager.emit('assetCompressionCompleted', event.data)
   }
 
   private handleCompressionError(error: ErrorEvent): void {
     console.error('Compression worker error:', error)
-    this.eventManager.emit('compressionError', { error: error.message, timestamp: Date.now() })
+    this.eventManager.emit('assetCompressionFailed', { assetId: 'unknown', error: error.message, timestamp: Date.now() })
   }
 }

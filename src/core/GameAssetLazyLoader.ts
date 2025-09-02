@@ -17,6 +17,7 @@ export interface LazyLoadConfig {
   cacheStrategy: 'memory' | 'localStorage' | 'indexedDB'
   retryAttempts: number
   retryDelay: number
+  processingDelay: number
 }
 
 export interface LoadProgress {
@@ -24,7 +25,7 @@ export interface LoadProgress {
   loaded: number
   total: number
   percentage: number
-  status: 'pending' | 'loading' | 'loaded' | 'error'
+  status: 'pending' | 'queued' | 'loading' | 'loaded' | 'error'
 }
 
 export interface AssetCache {
@@ -69,6 +70,7 @@ export class GameAssetLazyLoader {
       cacheStrategy: 'memory',
       retryAttempts: 3,
       retryDelay: 1000,
+      processingDelay: 50, // Default processing delay
       ...config
     }
     
@@ -108,10 +110,19 @@ export class GameAssetLazyLoader {
    * Start lazy loading for assets in viewport
    */
   public startLazyLoading(): void {
-    if (this.isProcessing) return
+    if (this.isProcessing) {
+      return
+    }
 
     this.isProcessing = true
-    this.processLoadQueue()
+    
+    // If there are assets to process immediately, start processing
+    if (this.loadQueue.length > 0) {
+      this.processLoadQueue().catch(error => {
+        console.error('Error in lazy loading process:', error)
+        this.isProcessing = false
+      })
+    }
   }
 
   /**
@@ -192,6 +203,16 @@ export class GameAssetLazyLoader {
       }
     }
 
+    if (this.loadQueue.includes(assetId)) {
+      return {
+        assetId,
+        loaded: 0,
+        total: asset.size,
+        percentage: 0,
+        status: 'queued'
+      }
+    }
+
     return {
       assetId,
       loaded: 0,
@@ -208,13 +229,14 @@ export class GameAssetLazyLoader {
     const totalAssets = this.assetQueue.size
     const loadedAssets = this.loadedAssets.size
     const failedAssets = this.failedAssets.size
+    const queuedAssets = this.loadQueue.length
 
     return {
       assetId: 'overall',
       loaded: loadedAssets,
       total: totalAssets,
       percentage: totalAssets > 0 ? Math.round((loadedAssets / totalAssets) * 100) : 0,
-      status: failedAssets === totalAssets ? 'error' : loadedAssets === totalAssets ? 'loaded' : 'loading'
+      status: failedAssets === totalAssets ? 'error' : loadedAssets === totalAssets ? 'loaded' : queuedAssets > 0 ? 'queued' : 'loading'
     }
   }
 
@@ -279,6 +301,53 @@ export class GameAssetLazyLoader {
     this.eventManager.emit('lazyLoader:destroyed', { timestamp: Date.now() })
   }
 
+  /**
+   * Get all registered assets
+   */
+  public getAllAssets(): GameAsset[] {
+    return Array.from(this.assetQueue.values())
+  }
+
+  /**
+   * Get current configuration
+   */
+  public getConfiguration(): LazyLoadConfig {
+    return { ...this.config }
+  }
+
+  /**
+   * Update configuration
+   */
+  public updateConfiguration(newConfig: Partial<LazyLoadConfig>): void {
+    this.config = { ...this.config, ...newConfig }
+  }
+
+  /**
+   * Check if lazy loading is active
+   */
+  public isActive(): boolean {
+    return this.isProcessing
+  }
+
+  /**
+   * Check memory usage and emit warning if needed
+   */
+  public checkMemoryUsage(): void {
+    if (typeof performance !== 'undefined' && (performance as any).memory) {
+      const memory = (performance as any).memory
+      const usageRatio = memory.usedJSHeapSize / memory.jsHeapSizeLimit
+      
+      if (usageRatio > 0.8) {
+        this.eventManager.emit(GameAssetLazyLoader.EVENTS.MEMORY_WARNING, {
+          message: 'Memory usage exceeded threshold',
+          currentUsage: usageRatio,
+          threshold: 0.8,
+          timestamp: Date.now()
+        })
+      }
+    }
+  }
+
   // Private methods
 
   private initializeIntersectionObserver(): void {
@@ -334,13 +403,29 @@ export class GameAssetLazyLoader {
   }
 
   private async processLoadQueue(): Promise<void> {
-    if (!this.isProcessing || this.loadQueue.length === 0) return
-
-    const batch = this.loadQueue.splice(0, this.config.batchSize)
-    const promises = batch.map(assetId => this.loadAsset(assetId))
+    if (!this.isProcessing) {
+      return
+    }
+    
+    if (this.loadQueue.length === 0) {
+      this.isProcessing = false
+      return
+    }
 
     try {
-      await Promise.allSettled(promises)
+      const batch = this.loadQueue.splice(0, this.config.batchSize)
+      
+      const promises = batch.map(assetId => this.loadAsset(assetId))
+
+      // Wait for all assets in the batch to complete
+      const results = await Promise.allSettled(promises)
+      
+      // Log results for debugging
+      const successful = results.filter(r => r.status === 'fulfilled').length
+      const failed = results.filter(r => r.status === 'rejected').length
+      
+      console.log(`Batch completed: ${successful} successful, ${failed} failed`)
+
       this.eventManager.emit(GameAssetLazyLoader.EVENTS.BATCH_COMPLETE, { 
         batchSize: batch.length, 
         completedAssets: batch, 
@@ -349,18 +434,31 @@ export class GameAssetLazyLoader {
       
       // Continue processing if there are more items
       if (this.loadQueue.length > 0) {
-        setTimeout(() => this.processLoadQueue(), 50) // Reduced delay for testing
+        // Use a more reliable delay mechanism
+        await new Promise(resolve => setTimeout(resolve, this.config.processingDelay))
+        // Only continue if still processing
+        if (this.isProcessing) {
+          this.processLoadQueue()
+        }
+      } else {
+        // No more items, mark as not processing
+        this.isProcessing = false
       }
     } catch (error) {
       console.error('Error processing load queue:', error)
+      this.isProcessing = false
     }
   }
 
   private async loadAsset(assetId: string): Promise<void> {
     const asset = this.assetQueue.get(assetId)
-    if (!asset) return
+    if (!asset) {
+      return
+    }
 
-    if (this.loadedAssets.has(assetId)) return
+    if (this.loadedAssets.has(assetId)) {
+      return
+    }
 
     this.loadingAssets.add(assetId)
     this.eventManager.emit(GameAssetLazyLoader.EVENTS.ASSET_LOAD_START, { assetId, asset, timestamp: Date.now() })
@@ -385,6 +483,7 @@ export class GameAssetLazyLoader {
       })
 
     } catch (error) {
+      console.error(`Failed to load asset ${assetId}:`, error)
       this.loadingAssets.delete(assetId)
       this.failedAssets.add(assetId)
       
@@ -428,6 +527,7 @@ export class GameAssetLazyLoader {
     }
     
     const worldData = await response.json()
+    
     return {
       ...worldData,
       metadata: asset.metadata,
@@ -440,8 +540,13 @@ export class GameAssetLazyLoader {
       const img = new Image()
       img.crossOrigin = 'anonymous'
       
-      img.onload = () => resolve(img)
-      img.onerror = () => reject(new Error(`Failed to load texture: ${asset.url}`))
+      // Set up event handlers first
+      img.onload = () => {
+        resolve(img)
+      }
+      img.onerror = () => {
+        reject(new Error(`Failed to load texture: ${asset.url}`))
+      }
       
       // Set src after setting up event handlers
       img.src = asset.url
@@ -454,6 +559,8 @@ export class GameAssetLazyLoader {
   }
 
   private async loadAudioAsset(asset: GameAsset): Promise<AudioBuffer> {
+    console.log(`Loading audio asset: ${asset.id}`)
+    
     const response = await fetch(asset.url)
     if (!response.ok) {
       throw new Error(`Failed to load audio: ${response.statusText}`)
@@ -464,7 +571,11 @@ export class GameAssetLazyLoader {
     
     try {
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+      console.log(`Audio asset loaded successfully: ${asset.id}`)
       return audioBuffer
+    } catch (error) {
+      console.error(`Error decoding audio: ${asset.id}`, error)
+      throw error
     } finally {
       audioContext.close()
     }

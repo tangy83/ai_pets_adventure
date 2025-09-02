@@ -31,9 +31,13 @@ describe('MouseInputHandler', () => {
       hidden: false
     } as any
     
-    // Mock performance.now
+    // Mock performance.now with incrementing values to simulate real timing
+    let mockTime = 1000
     global.performance = {
-      now: jest.fn(() => Date.now())
+      now: jest.fn(() => {
+        mockTime += 1
+        return mockTime
+      })
     } as any
     
     mouseHandler = new MouseInputHandler(mockEventManager)

@@ -17,13 +17,13 @@ export interface InputIntegrationConfig {
 }
 
 export class InputIntegrationSystem extends BaseSystem {
-  private eventManager: EventManager
-  private inputManager: InputManager
-  private keyboardHandler: KeyboardInputHandler
-  private mouseHandler: MouseInputHandler
-  private touchHandler: TouchInputHandler
-  private playerController: PlayerController
-  private player: Player
+  public eventManager!: EventManager
+  private inputManager!: InputManager
+  private keyboardHandler!: KeyboardInputHandler
+  private mouseHandler!: MouseInputHandler
+  private touchHandler!: TouchInputHandler
+  private playerController!: PlayerController
+  private player!: Player
   private config: InputIntegrationConfig
   private isEnabled: boolean = true
   private inputBuffer: Array<{ type: string; data: any; timestamp: number }> = []
@@ -269,9 +269,9 @@ export class InputIntegrationSystem extends BaseSystem {
   private handleMovementAction(action: any): void {
     // Emit movement event
     this.eventManager.emit('playerMovement', {
+      x: 0, // Will be updated by PlayerController
+      y: 0, // Will be updated by PlayerController
       direction: this.getDirectionFromAction(action.action),
-      isActive: true,
-      velocity: this.calculateMovementVelocity(action.action),
       timestamp: action.timestamp
     })
   }
@@ -279,9 +279,9 @@ export class InputIntegrationSystem extends BaseSystem {
   private handleMovementRelease(action: any): void {
     // Emit movement stop event
     this.eventManager.emit('playerMovement', {
+      x: 0,
+      y: 0,
       direction: 'none',
-      isActive: false,
-      velocity: { x: 0, y: 0 },
       timestamp: action.timestamp
     })
   }
@@ -289,7 +289,6 @@ export class InputIntegrationSystem extends BaseSystem {
   private handleJumpAction(action: any): void {
     // Emit jump event
     this.eventManager.emit('playerJump', {
-      force: 150, // Default jump force
       timestamp: action.timestamp
     })
   }
@@ -297,7 +296,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private handleInteractionAction(action: any): void {
     // Emit interaction event
     this.eventManager.emit('playerInteraction', {
-      type: 'interact',
+      targetId: 'unknown', // Will be updated by interaction system
+      interactionType: 'interact',
       timestamp: action.timestamp
     })
   }
@@ -305,7 +305,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private handleAttackAction(action: any): void {
     // Emit attack event
     this.eventManager.emit('playerAttack', {
-      type: 'attack',
+      targetId: 'unknown', // Will be updated by combat system
+      attackType: 'attack',
       timestamp: action.timestamp
     })
   }
@@ -313,7 +314,7 @@ export class InputIntegrationSystem extends BaseSystem {
   private handleSpecialAction(action: any): void {
     // Emit special ability event
     this.eventManager.emit('playerSpecialAbility', {
-      type: 'special',
+      abilityId: 'special',
       timestamp: action.timestamp
     })
   }
@@ -400,8 +401,8 @@ export class InputIntegrationSystem extends BaseSystem {
     this.processAccessibilityNavigation(event)
     
     this.eventManager.emit('accessibilityNavigation', {
-      type: 'tab',
-      direction: event.direction,
+      elementId: event.elementId || 'unknown',
+      hasFocus: true,
       timestamp: event.timestamp
     })
   }
@@ -419,8 +420,7 @@ export class InputIntegrationSystem extends BaseSystem {
     this.processAccessibilityActivation(event)
     
     this.eventManager.emit('accessibilityElementActivate', {
-      type: 'keyboard',
-      key: event.key,
+      elementId: event.elementId || 'unknown',
       timestamp: event.timestamp
     })
   }
@@ -438,8 +438,8 @@ export class InputIntegrationSystem extends BaseSystem {
     this.showAccessibilityHelp()
     
     this.eventManager.emit('accessibilityHelp', {
-      type: 'keyboard',
-      timestamp: event.timestamp
+      context: 'keyboard',
+      elementId: 'help'
     })
   }
 
@@ -508,7 +508,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private navigateToNextFocusableElement(): void {
     // Implementation for navigating to next focusable element
     this.eventManager.emit('accessibilityFocusChange', {
-      direction: 'next',
+      elementId: 'next',
+      hasFocus: true,
       timestamp: performance.now()
     })
   }
@@ -516,7 +517,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private navigateToPreviousFocusableElement(): void {
     // Implementation for navigating to previous focusable element
     this.eventManager.emit('accessibilityFocusChange', {
-      direction: 'previous',
+      elementId: 'previous',
+      hasFocus: true,
       timestamp: performance.now()
     })
   }
@@ -524,7 +526,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private navigateToFirstFocusableElement(): void {
     // Implementation for navigating to first focusable element
     this.eventManager.emit('accessibilityFocusChange', {
-      direction: 'first',
+      elementId: 'first',
+      hasFocus: true,
       timestamp: performance.now()
     })
   }
@@ -532,7 +535,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private navigateToLastFocusableElement(): void {
     // Implementation for navigating to last focusable element
     this.eventManager.emit('accessibilityFocusChange', {
-      direction: 'last',
+      elementId: 'last',
+      hasFocus: true,
       timestamp: performance.now()
     })
   }
@@ -540,7 +544,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private navigateInDirection(direction: string): void {
     // Implementation for directional navigation
     this.eventManager.emit('accessibilityFocusChange', {
-      direction,
+      elementId: direction,
+      hasFocus: true,
       timestamp: performance.now()
     })
   }
@@ -548,7 +553,7 @@ export class InputIntegrationSystem extends BaseSystem {
   private activateFocusedElement(): void {
     // Implementation for activating the currently focused element
     this.eventManager.emit('accessibilityElementActivate', {
-      method: 'keyboard',
+      elementId: 'focused',
       timestamp: performance.now()
     })
   }
@@ -556,7 +561,6 @@ export class InputIntegrationSystem extends BaseSystem {
   private toggleAccessibilityMenu(): void {
     // Implementation for toggling accessibility menu
     this.eventManager.emit('accessibilityMenuToggle', {
-      isVisible: true,
       timestamp: performance.now()
     })
   }
@@ -564,6 +568,7 @@ export class InputIntegrationSystem extends BaseSystem {
   private cycleNavigationMode(): void {
     // Implementation for cycling through navigation modes
     this.eventManager.emit('accessibilityNavigationModeChange', {
+      mode: 'cycle',
       timestamp: performance.now()
     })
   }
@@ -587,7 +592,7 @@ export class InputIntegrationSystem extends BaseSystem {
   private showAccessibilityHelp(): void {
     // Implementation for showing accessibility help
     this.eventManager.emit('accessibilityHelpDisplay', {
-      isVisible: true,
+      context: 'help',
       timestamp: performance.now()
     })
   }
@@ -912,9 +917,9 @@ export class InputIntegrationSystem extends BaseSystem {
     // Process single click based on position and game state
     // This could trigger interactions, selections, etc.
     this.eventManager.emit('mouseClickProcessed', {
-      action: 'click',
-      position: { x: event.x, y: event.y },
       button: event.button,
+      x: event.x,
+      y: event.y,
       timestamp: event.timestamp
     })
   }
@@ -922,9 +927,9 @@ export class InputIntegrationSystem extends BaseSystem {
   private processMouseDoubleClick(event: any): void {
     // Process double click (e.g., select all, special actions)
     this.eventManager.emit('mouseDoubleClickProcessed', {
-      action: 'doubleClick',
-      position: { x: event.x, y: event.y },
       button: event.button,
+      x: event.x,
+      y: event.y,
       timestamp: event.timestamp
     })
   }
@@ -932,9 +937,9 @@ export class InputIntegrationSystem extends BaseSystem {
   private processMouseRightClick(event: any): void {
     // Process right click (e.g., context menu, secondary actions)
     this.eventManager.emit('mouseRightClickProcessed', {
-      action: 'rightClick',
-      position: { x: event.x, y: event.y },
       button: event.button,
+      x: event.x,
+      y: event.y,
       timestamp: event.timestamp
     })
   }
@@ -942,10 +947,9 @@ export class InputIntegrationSystem extends BaseSystem {
   private processMouseDragStart(event: any): void {
     // Process drag start (e.g., begin selection, start drawing)
     this.eventManager.emit('mouseDragStartProcessed', {
-      action: 'dragStart',
-      position: { x: event.x, y: event.y },
-      startPosition: { x: event.startX, y: event.startY },
       button: event.button,
+      x: event.x,
+      y: event.y,
       timestamp: event.timestamp
     })
   }
@@ -953,11 +957,11 @@ export class InputIntegrationSystem extends BaseSystem {
   private processMouseDragMove(event: any): void {
     // Process drag move (e.g., update selection, continue drawing)
     this.eventManager.emit('mouseDragMoveProcessed', {
-      action: 'dragMove',
-      position: { x: event.x, y: event.y },
-      startPosition: { x: event.startX, y: event.startY },
-      delta: { x: event.deltaX, y: event.deltaY },
       button: event.button,
+      x: event.x,
+      y: event.y,
+      deltaX: event.deltaX,
+      deltaY: event.deltaY,
       timestamp: event.timestamp
     })
   }
@@ -965,13 +969,9 @@ export class InputIntegrationSystem extends BaseSystem {
   private processMouseDragEnd(event: any): void {
     // Process drag end (e.g., complete selection, finish drawing)
     this.eventManager.emit('mouseDragEndProcessed', {
-      action: 'dragEnd',
-      position: { x: event.x, y: event.y },
-      startPosition: { x: event.startX, y: event.startY },
-      endPosition: { x: event.endX, y: event.y },
-      delta: { x: event.deltaX, y: event.deltaY },
-      duration: event.duration,
       button: event.button,
+      x: event.x,
+      y: event.y,
       timestamp: event.timestamp
     })
   }
@@ -979,9 +979,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private processMouseHover(event: any): void {
     // Process hover (e.g., show tooltips, highlight elements)
     this.eventManager.emit('mouseHoverProcessed', {
-      action: 'hover',
-      position: { x: event.x, y: event.y },
-      target: event.target,
+      x: event.x,
+      y: event.y,
       timestamp: event.timestamp
     })
   }
@@ -989,9 +988,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private processMouseHoverEnd(event: any): void {
     // Process hover end (e.g., hide tooltips, remove highlights)
     this.eventManager.emit('mouseHoverEndProcessed', {
-      action: 'hoverEnd',
-      position: { x: event.x, y: event.y },
-      target: event.target,
+      x: event.x,
+      y: event.y,
       timestamp: event.timestamp
     })
   }
@@ -999,8 +997,9 @@ export class InputIntegrationSystem extends BaseSystem {
   private processMouseWheel(event: any): void {
     // Process wheel (e.g., zoom, scroll, change tools)
     this.eventManager.emit('mouseWheelProcessed', {
-      action: 'wheel',
-      delta: { x: event.deltaX, y: event.deltaY, z: event.deltaZ },
+      deltaX: event.deltaX,
+      deltaY: event.deltaY,
+      deltaZ: event.deltaZ,
       timestamp: event.timestamp
     })
   }
@@ -1009,8 +1008,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private processTouchStart(event: any): void {
     // Process touch start (e.g., begin interaction, start gesture)
     this.eventManager.emit('touchStartProcessed', {
-      action: 'touchStart',
-      touches: event.touches,
+      x: event.x || 0,
+      y: event.y || 0,
       timestamp: event.timestamp
     })
   }
@@ -1018,8 +1017,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private processTouchMove(event: any): void {
     // Process touch move (e.g., gesture continuation, dragging)
     this.eventManager.emit('touchMoveProcessed', {
-      action: 'touchMove',
-      touches: event.touches,
+      x: event.x || 0,
+      y: event.y || 0,
       timestamp: event.timestamp
     })
   }
@@ -1027,8 +1026,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private processTouchEnd(event: any): void {
     // Process touch end (e.g., complete interaction, finalize gesture)
     this.eventManager.emit('touchEndProcessed', {
-      action: 'touchEnd',
-      touches: event.touches,
+      x: event.x || 0,
+      y: event.y || 0,
       timestamp: event.timestamp
     })
   }
@@ -1036,7 +1035,6 @@ export class InputIntegrationSystem extends BaseSystem {
   private processTouchCancel(event: any): void {
     // Process touch cancel (e.g., abort interaction, reset state)
     this.eventManager.emit('touchCancelProcessed', {
-      action: 'touchCancel',
       timestamp: event.timestamp
     })
   }
@@ -1044,9 +1042,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private processTouchTap(event: any): void {
     // Process tap (e.g., select, activate, interact)
     this.eventManager.emit('touchTapProcessed', {
-      action: 'tap',
-      position: { x: event.data?.x, y: event.data?.y },
-      pressure: event.data?.pressure,
+      x: event.data?.x || 0,
+      y: event.data?.y || 0,
       timestamp: event.timestamp
     })
   }
@@ -1054,9 +1051,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private processTouchDoubleTap(event: any): void {
     // Process double tap (e.g., zoom, special actions)
     this.eventManager.emit('touchDoubleTapProcessed', {
-      action: 'doubleTap',
-      position: { x: event.data?.x, y: event.data?.y },
-      timeDiff: event.data?.timeDiff,
+      x: event.data?.x || 0,
+      y: event.data?.y || 0,
       timestamp: event.timestamp
     })
   }
@@ -1064,9 +1060,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private processTouchLongPress(event: any): void {
     // Process long press (e.g., context menu, secondary actions)
     this.eventManager.emit('touchLongPressProcessed', {
-      action: 'longPress',
-      position: { x: event.data?.x, y: event.data?.y },
-      duration: event.data?.duration,
+      x: event.data?.x || 0,
+      y: event.data?.y || 0,
       timestamp: event.timestamp
     })
   }
@@ -1074,12 +1069,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private processTouchSwipe(event: any): void {
     // Process swipe (e.g., navigation, scrolling, gestures)
     this.eventManager.emit('touchSwipeProcessed', {
-      action: 'swipe',
       direction: event.data?.direction,
       distance: event.data?.distance,
-      startPosition: { x: event.data?.startX, y: event.data?.startY },
-      endPosition: { x: event.data?.endX, y: event.data?.endY },
-      duration: event.data?.duration,
       timestamp: event.timestamp
     })
   }
@@ -1087,12 +1078,8 @@ export class InputIntegrationSystem extends BaseSystem {
   private processTouchFlick(event: any): void {
     // Process flick (e.g., fast navigation, momentum scrolling)
     this.eventManager.emit('touchFlickProcessed', {
-      action: 'flick',
       direction: event.data?.direction,
       velocity: event.data?.velocity,
-      startPosition: { x: event.data?.startX, y: event.data?.startY },
-      endPosition: { x: event.data?.endX, y: event.data?.endY },
-      duration: event.data?.duration,
       timestamp: event.timestamp
     })
   }

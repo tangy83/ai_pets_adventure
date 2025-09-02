@@ -129,7 +129,7 @@ export class MemoryManagement {
     
     this.textureAtlases.set(id, atlas)
     
-    this.eventManager.emit(MemoryManagement.EVENTS.TEXTURE_ATLAS_CREATED, {
+    this.eventManager.emit('textureAtlas:created', {
       atlasId: id,
       size: finalSize,
       timestamp: Date.now()
@@ -159,7 +159,7 @@ export class MemoryManagement {
     // Check if texture fits in canvas
     if (atlas.currentY + textureHeight > atlas.canvas.height) {
       atlas.isFull = true
-      this.eventManager.emit(MemoryManagement.EVENTS.TEXTURE_ATLAS_FULL, {
+      this.eventManager.emit('textureAtlas:full', {
         atlasId,
         timestamp: Date.now()
       })
@@ -191,7 +191,7 @@ export class MemoryManagement {
     // Cache the texture
     this.textureCache.set(textureId, image)
 
-    this.eventManager.emit(MemoryManagement.EVENTS.TEXTURE_ADDED, {
+    this.eventManager.emit('texture:added', {
       atlasId,
       textureId,
       coordinates: atlas.textures.get(textureId),
@@ -234,8 +234,9 @@ export class MemoryManagement {
     }
 
     if (totalSaved > 0) {
-      this.eventManager.emit(MemoryManagement.EVENTS.TEXTURE_ATLAS_OPTIMIZED, {
-        memorySaved: totalSaved,
+      this.eventManager.emit('textureAtlas:optimized', {
+        atlasId: 'optimized',
+        savedMemory: totalSaved,
         timestamp: Date.now()
       })
     }
@@ -277,8 +278,9 @@ export class MemoryManagement {
 
     this.objectPools.set(type, pool)
     
-    this.eventManager.emit(MemoryManagement.EVENTS.OBJECT_POOL_CREATED, {
-      poolType: type,
+    this.eventManager.emit('objectPool:created', {
+      poolId: type,
+      type: type,
       initialSize: finalConfig.initialSize,
       timestamp: Date.now()
     })
@@ -363,9 +365,11 @@ export class MemoryManagement {
     pool.stats.currentSize = pool.available.length + pool.inUse.size
     pool.stats.peakSize = Math.max(pool.stats.peakSize, pool.stats.currentSize)
 
-    this.eventManager.emit(MemoryManagement.EVENTS.OBJECT_POOL_RESIZED, {
-      poolType: type,
+    this.eventManager.emit('objectPool:resized', {
+      poolId: type,
+      type: type,
       newSize: pool.stats.currentSize,
+      oldSize: pool.stats.currentSize,
       timestamp: Date.now()
     })
   }
@@ -420,9 +424,9 @@ export class MemoryManagement {
       // Optimize object pools
       this.optimizeObjectPools()
       
-      this.eventManager.emit(MemoryManagement.EVENTS.MEMORY_OPTIMIZED, {
-        previousUsage: stats.totalMemoryUsage,
-        currentUsage: this.getTotalMemoryUsage(),
+      this.eventManager.emit('memory:optimized', {
+        savedMemory: stats.totalMemoryUsage - this.getTotalMemoryUsage(),
+        optimizationType: 'automatic',
         timestamp: Date.now()
       })
     }
@@ -509,8 +513,9 @@ export class MemoryManagement {
         const memoryUsage = this.getTotalMemoryUsage()
         
         if (memoryUsage > this.memoryThreshold) {
-          this.eventManager.emit(MemoryManagement.EVENTS.MEMORY_WARNING, {
-            usage: memoryUsage,
+          this.eventManager.emit('memory:warning', {
+            message: `Memory usage ${memoryUsage} exceeds threshold ${this.memoryThreshold}`,
+            currentUsage: memoryUsage,
             threshold: this.memoryThreshold,
             timestamp: Date.now()
           })
@@ -522,7 +527,7 @@ export class MemoryManagement {
   }
 
   private setupEventListeners(): void {
-    this.eventManager.on('memoryWarning', this.handleMemoryWarning.bind(this))
+    this.eventManager.on('memory:warning', this.handleMemoryWarning.bind(this))
   }
 
   private handleMemoryWarning(event: any): void {

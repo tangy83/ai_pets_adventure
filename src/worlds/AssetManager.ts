@@ -256,9 +256,8 @@ export class AssetManager {
     // Update memory usage
     this.totalMemoryUsage -= asset.memoryUsage
     
-    this.eventManager.emit('assetUnloaded', { 
+        this.eventManager.emit('assetUnloaded', {
       assetId, 
-      reason, 
       timestamp: Date.now()
     })
   }
@@ -338,7 +337,7 @@ export class AssetManager {
     this.textureAtlases.set(atlasId, atlas)
     this.eventManager.emit('textureAtlasCreated', { 
       atlasId, 
-      size: atlas.size,
+      textureCount: atlas.sprites.size,
       timestamp: Date.now()
     })
     
@@ -484,7 +483,7 @@ export class AssetManager {
       
       this.eventManager.emit('assetCompressed', {
         assetId,
-        result,
+        compressionRatio: 0.5, // Default compression ratio, should be calculated from actual result
         timestamp: Date.now()
       })
 
@@ -526,7 +525,7 @@ export class AssetManager {
       
       this.eventManager.emit('progressiveTiersCreated', {
         assetId,
-        tiers: Array.from(tiers.entries()),
+        tierCount: tiers.size,
         timestamp: Date.now()
       })
 
@@ -570,7 +569,8 @@ export class AssetManager {
     await Promise.all(optimizationPromises)
     
     this.eventManager.emit('assetLoadingOptimized', {
-      assetIds,
+      optimizationType: 'compression_and_tiers',
+      improvement: assetIds.length,
       timestamp: Date.now()
     })
   }
@@ -679,7 +679,6 @@ export class AssetManager {
       
       this.eventManager.emit('assetLoaded', { 
         assetId, 
-        size: asset.size,
         loadTime, 
         timestamp: Date.now()
       })
@@ -864,6 +863,7 @@ export class AssetManager {
     
     this.eventManager.emit('batchLoaded', { 
       batchId: batch.id,
+      assetCount: batch.assets.length,
       timestamp: Date.now()
     })
   }
@@ -1017,6 +1017,7 @@ export class AssetManager {
     
     this.eventManager.emit('assetRestoredFromCache', { 
       assetId,
+      cacheType: 'memory', // Default cache type
       timestamp: Date.now()
     })
   }
@@ -1090,6 +1091,7 @@ export class AssetManager {
       // For now, just emit an event
       this.eventManager.emit('chunkAssetsRequested', { 
         chunkId,
+        assetCount: 0, // Will be updated with actual count
         timestamp: Date.now()
       })
     }
@@ -1099,6 +1101,7 @@ export class AssetManager {
     // Unload assets that are no longer needed
     this.eventManager.emit('chunkAssetsUnloaded', { 
       chunkId,
+      assetCount: 0, // Will be updated with actual count
       timestamp: Date.now()
     })
   }

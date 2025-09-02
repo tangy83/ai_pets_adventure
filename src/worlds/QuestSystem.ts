@@ -116,7 +116,8 @@ export class QuestSystem {
       this.eventManager.emit('questStarted', {
         questId,
         previousQuest: null,
-        player: { id: playerId }
+        player: { id: playerId },
+        timestamp: Date.now()
       })
     }
     
@@ -195,7 +196,9 @@ export class QuestSystem {
       this.eventManager.emit('objectiveCompleted', {
         objectiveId,
         questId,
-        player: { id: playerId }
+        player: { id: playerId },
+        playerId,
+        timestamp: Date.now()
       })
     }
 

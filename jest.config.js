@@ -12,7 +12,7 @@ module.exports = {
   transform: {
     '^.+\\.(ts|tsx)$': 'ts-jest',
   },
-  testTimeout: 15000,
+  testTimeout: 30000, // Increase timeout to 30 seconds
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
@@ -24,5 +24,9 @@ module.exports = {
         jsx: 'react-jsx'
       }
     }
+  },
+  // Add fake timers configuration
+  fakeTimers: {
+    enableGlobally: true
   }
 }

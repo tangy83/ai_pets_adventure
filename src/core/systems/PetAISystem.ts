@@ -423,8 +423,8 @@ export class PetAISystem extends BaseSystem {
     // Set default behavior tree
     this.behaviorTrees.set(petId, this.createPetBehaviorTree(petId))
 
-    this.log('info', `Pet ${petId} registered with AI system`)
-    this.eventManager.emit('pet:ai:registered', { petId, timestamp: Date.now() })
+    this.log(`Pet ${petId} registered with AI system`, 'info')
+    this.eventManager?.emit('pet:ai:registered', { petId, timestamp: Date.now() })
   }
 
   private createPetBehaviorTree(petId: string): BehaviorTreeNode {
@@ -479,7 +479,7 @@ export class PetAISystem extends BaseSystem {
       }
 
       // Emit behavior execution event
-      this.eventManager.emit('pet:ai:behavior:executed', {
+      this.eventManager?.emit('pet:ai:behavior:executed', {
         petId,
         behavior: result.data,
         success: result.success,
@@ -489,7 +489,7 @@ export class PetAISystem extends BaseSystem {
       return result
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      this.log('error', `Error executing behavior tree for pet ${petId}: ${errorMessage}`)
+      this.log(`Error executing behavior tree for pet ${petId}: ${errorMessage}`, 'error')
       return { success: false, status: BehaviorStatus.ERROR, message: errorMessage }
     }
   }
@@ -610,11 +610,11 @@ export class PetAISystem extends BaseSystem {
         // Execute behavior tree if ready
         if (Date.now() - pet.actionCooldown > 0) {
           this.executeBehaviorTree(petId).catch(error => {
-            this.log('error', `Error updating pet ${petId}: ${error}`)
+            this.log(`Error updating pet ${petId}: ${error}`, 'error')
           })
         }
       } catch (error) {
-        this.log('error', `Error updating pet ${petId}: ${error}`)
+        this.log(`Error updating pet ${petId}: ${error}`, 'error')
       }
     }
   }
@@ -632,7 +632,7 @@ export class PetAISystem extends BaseSystem {
     }
 
     // Emit state update event
-    this.eventManager.emit('pet:ai:state:updated', {
+    this.eventManager?.emit('pet:ai:state:updated', {
       petId: pet.id,
       state: pet,
       timestamp: Date.now()
@@ -651,7 +651,7 @@ export class PetAISystem extends BaseSystem {
     const pet = this.pets.get(petId)
     if (pet) {
       pet.currentBehavior = behavior
-      this.eventManager.emit('pet:ai:behavior:changed', {
+      this.eventManager?.emit('pet:ai:behavior:changed', {
         petId,
         behavior,
         timestamp: Date.now()
@@ -663,7 +663,7 @@ export class PetAISystem extends BaseSystem {
     const skillManager = this.skillManagers.get(petId)
     if (skillManager) {
       skillManager.addSkill(skill)
-      this.eventManager.emit('pet:ai:skill:added', {
+      this.eventManager?.emit('pet:ai:skill:added', {
         petId,
         skill,
         timestamp: Date.now()
@@ -678,7 +678,7 @@ export class PetAISystem extends BaseSystem {
 
   public forceBehaviorExecution(petId: string): void {
     this.executeBehaviorTree(petId).catch(error => {
-      this.log('error', `Error in forced behavior execution for pet ${petId}: ${error}`)
+      this.log(`Error in forced behavior execution for pet ${petId}: ${error}`, 'error')
     })
   }
 
@@ -689,7 +689,7 @@ export class PetAISystem extends BaseSystem {
   public destroy(): void {
     // Clean up all pets
     for (const petId of this.pets.keys()) {
-      this.eventManager.emit('pet:ai:destroyed', { petId, timestamp: Date.now() })
+      this.eventManager?.emit('pet:ai:destroyed', { petId, timestamp: Date.now() })
     }
 
     this.pets.clear()

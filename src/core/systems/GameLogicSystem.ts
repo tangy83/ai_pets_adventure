@@ -49,7 +49,7 @@ export interface ScoringCondition {
 
 export class GameLogicSystem extends BaseSystem {
   private questSystem: QuestSystem
-  private gameState: GameState
+  private gameState!: GameState
   private currentScore: GameScore
   private achievements: Map<string, Achievement>
   private scoringRules: Map<string, ScoringRule>
@@ -120,8 +120,9 @@ export class GameLogicSystem extends BaseSystem {
     // Emit quest progress event
     this.eventManager?.emit('questProgressUpdated', {
       questId,
-      progress: 0,
-      score: this.currentScore.totalScore
+      objectiveId: 'main',
+      player: this.gameState.getPlayer(),
+      progress: 0
     })
   }
 
@@ -145,14 +146,14 @@ export class GameLogicSystem extends BaseSystem {
     this.progress.questProgress.set(questId, 100)
     
     // Check for achievements
-    this.checkQuestAchievements(quest)
+    this.checkQuestAchievements()
     
     // Emit completion event
     this.eventManager?.emit('questProgressUpdated', {
       questId,
-      progress: 100,
-      score: this.currentScore.totalScore,
-      completed: true
+      objectiveId: 'main',
+      player: this.gameState.getPlayer(),
+      progress: 100
     })
   }
 
@@ -175,8 +176,8 @@ export class GameLogicSystem extends BaseSystem {
     this.eventManager?.emit('questProgressUpdated', {
       questId,
       objectiveId,
-      progress,
-      score: this.currentScore.totalScore
+      player: this.gameState.getPlayer(),
+      progress
     })
   }
 
@@ -193,9 +194,10 @@ export class GameLogicSystem extends BaseSystem {
     
     // Emit level up event
     this.eventManager?.emit('gameProgressUpdated', {
-      type: 'level_up',
-      newLevel,
-      score: this.currentScore.totalScore
+      questId: 'level_up',
+      objectiveId: 'level_up',
+      progress: newLevel,
+      timestamp: Date.now()
     })
   }
 
@@ -261,11 +263,10 @@ export class GameLogicSystem extends BaseSystem {
       
       // Emit score update event
       this.eventManager?.emit('scoreUpdated', {
-        action,
-        points: finalPoints,
-        totalScore: this.currentScore.totalScore,
-        streak: this.currentScore.streak,
-        multiplier: this.currentScore.multiplier
+        newScore: this.currentScore.totalScore,
+        pointsEarned: finalPoints,
+        reason: action,
+        timestamp: Date.now()
       })
     }
   }
@@ -314,6 +315,7 @@ export class GameLogicSystem extends BaseSystem {
           description: `Reach ${threshold} total points`,
           icon: '🏆',
           points: threshold / 10,
+          isUnlocked: true,
           category: 'special'
         })
       }
@@ -333,6 +335,7 @@ export class GameLogicSystem extends BaseSystem {
         description: 'Complete your first quest',
         icon: '🎯',
         points: 50,
+        isUnlocked: true,
         category: 'quest'
       })
     }
@@ -345,6 +348,7 @@ export class GameLogicSystem extends BaseSystem {
         description: 'Complete 10 quests',
         icon: '👑',
         points: 200,
+        isUnlocked: true,
         category: 'quest'
       })
     }
@@ -361,6 +365,7 @@ export class GameLogicSystem extends BaseSystem {
         description: 'Explore 50 areas',
         icon: '🗺️',
         points: 100,
+        isUnlocked: true,
         category: 'exploration'
       })
     }
@@ -374,6 +379,7 @@ export class GameLogicSystem extends BaseSystem {
         description: 'Reach level 5',
         icon: '⭐',
         points: 75,
+        isUnlocked: true,
         category: 'special'
       })
     }
@@ -385,6 +391,7 @@ export class GameLogicSystem extends BaseSystem {
         description: 'Reach level 10',
         icon: '🌟',
         points: 150,
+        isUnlocked: true,
         category: 'special'
       })
     }
@@ -398,6 +405,7 @@ export class GameLogicSystem extends BaseSystem {
         description: 'Unlock the Crystal Caverns',
         icon: '💎',
         points: 100,
+        isUnlocked: true,
         category: 'exploration'
       })
     }
@@ -411,6 +419,7 @@ export class GameLogicSystem extends BaseSystem {
         description: 'Reach 50% pet bond',
         icon: '🐾',
         points: 75,
+        isUnlocked: false,
         category: 'pet'
       })
     }
@@ -436,8 +445,7 @@ export class GameLogicSystem extends BaseSystem {
     // Emit achievement unlocked event
     this.eventManager?.emit('achievementUnlocked', {
       achievementId: id,
-      achievement,
-      totalScore: this.currentScore.totalScore
+      totalAchievements: this.achievements.size
     })
     
     console.log(`Achievement unlocked: ${achievement.name}`)
@@ -459,7 +467,7 @@ export class GameLogicSystem extends BaseSystem {
       // Emit level up event
       this.eventManager?.emit('playerLevelUp', {
         newLevel: this.progress.currentLevel,
-        score: this.currentScore.totalScore
+        player: { id: 'player', level: this.progress.currentLevel }
       })
     }
   }

@@ -400,7 +400,8 @@ describe('MemoryManagement - Comprehensive Testing', () => {
       memoryManagement.createObjectPool('test-pool', () => ({}), () => {})
       
       expect(eventSpy).toHaveBeenCalledWith({
-        poolType: 'test-pool',
+        poolId: 'test-pool',
+        type: 'test-pool',
         initialSize: 50,
         timestamp: expect.any(Number)
       })

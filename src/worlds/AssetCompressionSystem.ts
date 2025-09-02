@@ -218,7 +218,9 @@ export class AssetCompressionSystem {
     
     this.eventManager.emit('imageCompressed', {
       assetId: 'temp',
-      result,
+      originalSize: result.originalSize,
+      compressedSize: result.compressedSize,
+      compressionRatio: result.compressionRatio,
       timestamp: Date.now()
     })
     
@@ -283,7 +285,9 @@ export class AssetCompressionSystem {
       
       this.eventManager.emit('textureCompressed', {
         assetId: 'temp',
-        result,
+        originalSize: result.originalSize,
+        compressedSize: result.compressedSize,
+        compressionRatio: result.compressionRatio,
         timestamp: Date.now()
       })
       
@@ -354,7 +358,9 @@ export class AssetCompressionSystem {
       
       this.eventManager.emit('audioCompressed', {
         assetId: 'temp',
-        result,
+        originalSize: result.originalSize,
+        compressedSize: result.compressedSize,
+        compressionRatio: result.compressionRatio,
         timestamp: Date.now()
       })
       
@@ -406,7 +412,9 @@ export class AssetCompressionSystem {
       
       this.eventManager.emit('dataCompressed', {
         assetId: 'temp',
-        result,
+        originalSize: result.originalSize,
+        compressedSize: result.compressedSize,
+        compressionRatio: result.compressionRatio,
         timestamp: Date.now()
       })
       
@@ -579,7 +587,9 @@ export class AssetCompressionSystem {
         // Handle successful compression
         this.eventManager.emit('assetCompressionCompleted', {
           assetId: requestId,
-          result,
+          originalSize: result.originalSize,
+          compressedSize: result.compressedSize,
+          compressionRatio: result.compressionRatio,
           timestamp: Date.now()
         })
       } else if (messageType === 'error') {
@@ -878,7 +888,9 @@ export class AssetCompressionSystem {
         if (callback) callback(result)
         this.eventManager.emit('assetCompressionCompleted', {
           assetId,
-          result,
+          originalSize: result.originalSize,
+          compressedSize: result.compressedSize,
+          compressionRatio: result.compressionRatio,
           timestamp: Date.now()
         })
       })

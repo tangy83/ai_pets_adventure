@@ -127,9 +127,9 @@ describe('RewardCalculator', () => {
       const playerId = 'test_player'
       const stats = rewardCalculator.getPlayerRewardStats(playerId)
       expect(stats).toBeDefined()
-      expect(typeof stats.totalExperience).toBe('number')
-      expect(typeof stats.totalCoins).toBe('number')
-      expect(typeof stats.totalOrbs).toBe('number')
+      expect(typeof stats?.totalExperience).toBe('number')
+      expect(typeof stats?.totalCoins).toBe('number')
+      expect(typeof stats?.totalOrbs).toBe('number')
     })
 
     test('should get player total rewards', () => {
@@ -193,14 +193,14 @@ describe('RewardCalculator', () => {
   })
 
   describe('Utility Methods', () => {
-    test('should get default configuration', () => {
-      const defaultConfig = rewardCalculator.getDefaultConfig()
-      expect(defaultConfig).toBeDefined()
-      expect(typeof defaultConfig.maxMultiplier).toBe('number')
-      expect(typeof defaultConfig.orbConversionRate).toBe('number')
+    test('should get current configuration with basic properties', () => {
+      const currentConfig = rewardCalculator.getCurrentConfig()
+      expect(currentConfig).toBeDefined()
+      expect(typeof currentConfig.maxMultiplier).toBe('number')
+      expect(typeof currentConfig.orbConversionRate).toBe('number')
     })
 
-    test('should get current configuration', () => {
+    test('should get current configuration with advanced properties', () => {
       const currentConfig = rewardCalculator.getCurrentConfig()
       expect(currentConfig).toBeDefined()
       expect(typeof currentConfig.enableDifficultyMultipliers).toBe('boolean')

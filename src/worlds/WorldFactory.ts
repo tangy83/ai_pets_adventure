@@ -121,8 +121,7 @@ export class WorldFactory {
     // Emit world created event
     this.eventManager.emit('worldCreated', {
       worldId,
-      templateId,
-      players,
+      worldData: { templateId, players },
       timestamp: Date.now()
     })
 
@@ -172,7 +171,8 @@ export class WorldFactory {
 
     this.eventManager.emit('worldStatusChanged', {
       worldId,
-      status,
+      oldStatus: world.status,
+      newStatus: status,
       timestamp: Date.now()
     })
 
@@ -246,6 +246,7 @@ export class WorldFactory {
       this.eventManager.emit('questCompletedInWorld', {
         worldId,
         questId,
+        player: { id: 'system', type: 'system' }, // Placeholder player for system events
         timestamp: Date.now()
       })
     }
@@ -264,7 +265,6 @@ export class WorldFactory {
     
     this.eventManager.emit('worldDestroyed', {
       worldId,
-      templateId: world.templateId,
       timestamp: Date.now()
     })
 
@@ -397,8 +397,7 @@ export class WorldFactory {
   }
 
   private setupEventListeners(): void {
-    this.eventManager.on('playerJoinedWorld', (event) => {
-      const { worldId, playerId } = event.data
+    this.eventManager.on('playerJoinedWorld', ({ worldId, playerId }) => {
       const world = this.activeWorlds.get(worldId)
       if (world) {
         world.players.push(playerId)
@@ -410,8 +409,7 @@ export class WorldFactory {
       }
     })
 
-    this.eventManager.on('playerLeftWorld', (event) => {
-      const { worldId, playerId } = event.data
+    this.eventManager.on('playerLeftWorld', ({ worldId, playerId }) => {
       const world = this.activeWorlds.get(worldId)
       if (world) {
         const index = world.players.indexOf(playerId)
@@ -426,8 +424,7 @@ export class WorldFactory {
       }
     })
 
-    this.eventManager.on('questCompletedInWorld', (event) => {
-      const { worldId, questId } = event.data
+    this.eventManager.on('questCompletedInWorld', ({ worldId, questId }) => {
       const world = this.activeWorlds.get(worldId)
       if (world) {
         const questIndex = world.currentQuests.indexOf(questId)
@@ -438,33 +435,36 @@ export class WorldFactory {
         this.eventManager.emit('questCompletedInWorld', {
           worldId,
           questId,
+          player: { id: 'system', type: 'system' }, // Placeholder player for system events
           timestamp: Date.now()
         })
       }
     })
 
-    this.eventManager.on('worldStatusChanged', (event) => {
-      const { worldId, status } = event.data
+    this.eventManager.on('worldStatusChanged', ({ worldId, newStatus }) => {
       const world = this.activeWorlds.get(worldId)
       if (world) {
-        world.status = status
-        if (status === 'completed' || status === 'failed') {
-          world.endTime = Date.now()
+        // Type guard to ensure newStatus matches the expected world status type
+        const validStatuses = ['loading', 'active', 'paused', 'completed', 'failed'] as const
+        if (validStatuses.includes(newStatus as any)) {
+          world.status = newStatus as 'loading' | 'active' | 'paused' | 'completed' | 'failed'
+          if (newStatus === 'completed' || newStatus === 'failed') {
+            world.endTime = Date.now()
+          }
+          this.eventManager.emit('worldStatusChanged', {
+            worldId,
+            oldStatus: world.status,
+            newStatus,
+            timestamp: Date.now()
+          })
         }
-        this.eventManager.emit('worldStatusChanged', {
-          worldId,
-          status,
-          timestamp: Date.now()
-        })
       }
     })
 
-    this.eventManager.on('worldDestroyed', (event) => {
-      const { worldId, templateId } = event.data
+    this.eventManager.on('worldDestroyed', ({ worldId }) => {
       this.activeWorlds.delete(worldId)
       this.eventManager.emit('worldDestroyed', {
         worldId,
-        templateId,
         timestamp: Date.now()
       })
     })

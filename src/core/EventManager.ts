@@ -33,6 +33,7 @@ export interface GameEvents {
     questId: string
     previousQuest: string | null
     player: any
+    timestamp: number
   }
   questCompleted: {
     questId: string
@@ -561,6 +562,7 @@ export interface GameEvents {
     questId: string
     objectiveId: string
     player: any
+    progress: number
     timestamp?: number
   }
   questReset: {
@@ -727,6 +729,7 @@ export interface GameEvents {
     objectiveId: string
     questId: string
     player: any
+    playerId: string
     timestamp?: number
   }
   objectiveTrackerAutoSave: {
@@ -748,12 +751,15 @@ export interface GameEvents {
   petSkillUsed: {
     petId: string
     skillId: string
+    playerId: string
+    effectiveness: number
     timestamp: number
   }
   petBehaviorChanged: {
     petId: string
     oldBehavior: string
     newBehavior: string
+    playerId: string
     timestamp: number
   }
   
@@ -767,11 +773,15 @@ export interface GameEvents {
   }
   objectiveRewardsCalculated: {
     objectiveId: string
+    questId: string
     playerId: string
     rewards: any
+    calculation: any
     timestamp: number
   }
   rewardsDistributed: {
+    questId: string
+    objectiveId: string
     playerId: string
     rewards: any
     timestamp: number
@@ -779,11 +789,14 @@ export interface GameEvents {
   rewardsCheckpointSaved: {
     playerId: string
     checkpointId: string
+    checkpointName: string
+    rewardCount: number
     timestamp: number
   }
   rewardsCheckpointRestored: {
     playerId: string
     checkpointId: string
+    restoredRewards: number
     timestamp: number
   }
   
@@ -1161,6 +1174,320 @@ export interface GameEvents {
     timestamp: number
   }
   
+  // Asset compression events
+  imageCompressed: {
+    assetId: string
+    originalSize: number
+    compressedSize: number
+    compressionRatio: number
+    timestamp: number
+  }
+  textureCompressed: {
+    assetId: string
+    originalSize: number
+    compressedSize: number
+    compressionRatio: number
+    timestamp: number
+  }
+  audioCompressed: {
+    assetId: string
+    originalSize: number
+    compressedSize: number
+    compressionRatio: number
+    timestamp: number
+  }
+  dataCompressed: {
+    assetId: string
+    originalSize: number
+    compressedSize: number
+    compressionRatio: number
+    timestamp: number
+  }
+  
+  // Additional missing event types
+  assetRequested: {
+    assetId: string
+    timestamp: number
+  }
+  
+  networkSlow: {
+    latency: number
+    timestamp: number
+  }
+  
+  assetLoadError: {
+    assetId: string
+    error: string
+    timestamp: number
+  }
+  
+  // Additional missing event types
+  gameProgressReset: {
+    timestamp: number
+  }
+  
+  // Touch gesture events
+  tap: {
+    x: number
+    y: number
+    timestamp: number
+  }
+  doubleTap: {
+    x: number
+    y: number
+    timestamp: number
+  }
+  longPress: {
+    x: number
+    y: number
+    timestamp: number
+  }
+  swipe: {
+    direction: string
+    distance: number
+    timestamp: number
+  }
+  flick: {
+    direction: string
+    velocity: number
+    timestamp: number
+  }
+  
+  // Player movement events
+  playerMovement: {
+    x: number
+    y: number
+    direction: string
+    timestamp: number
+  }
+  playerJump: {
+    timestamp: number
+  }
+  playerInteraction: {
+    targetId: string
+    interactionType: string
+    timestamp: number
+  }
+  playerAttack: {
+    targetId: string
+    attackType: string
+    timestamp: number
+  }
+  playerSpecialAbility: {
+    abilityId: string
+    timestamp: number
+  }
+  playerPositionChanged: {
+    x: number
+    y: number
+    timestamp: number
+  }
+  
+  // Game control events
+  gamePauseRequested: {
+    timestamp: number
+  }
+  inventoryToggleRequested: {
+    timestamp: number
+  }
+  mapToggleRequested: {
+    timestamp: number
+  }
+  
+  // Accessibility events
+  accessibilityNavigation: {
+    elementId: string
+    hasFocus: boolean
+    timestamp: number
+  }
+  accessibilityMenuToggle: {
+    timestamp: number
+  }
+  accessibilityNavigationModeChange: {
+    mode: string
+    timestamp: number
+  }
+  accessibilityPageNavigation: {
+    direction: string
+    timestamp: number
+  }
+  accessibilityHelpDisplay: {
+    context: string
+    timestamp: number
+  }
+  
+  // Mouse processing events
+  mouseClickProcessed: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+  }
+  mouseDoubleClickProcessed: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+  }
+  mouseRightClickProcessed: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+  }
+  mouseDragStartProcessed: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+  }
+  mouseDragMoveProcessed: {
+    button: number
+    x: number
+    y: number
+    deltaX: number
+    deltaY: number
+    timestamp: number
+  }
+  mouseDragEndProcessed: {
+    button: number
+    x: number
+    y: number
+    timestamp: number
+  }
+  mouseHoverProcessed: {
+    x: number
+    y: number
+    timestamp: number
+  }
+  mouseHoverEndProcessed: {
+    x: number
+    y: number
+    timestamp: number
+  }
+  mouseWheelProcessed: {
+    deltaX: number
+    deltaY: number
+    deltaZ: number
+    timestamp: number
+  }
+  
+  // Touch processing events
+  touchStartProcessed: {
+    x: number
+    y: number
+    timestamp: number
+  }
+  touchMoveProcessed: {
+    x: number
+    y: number
+    timestamp: number
+  }
+  touchEndProcessed: {
+    x: number
+    y: number
+    timestamp: number
+  }
+  touchCancelProcessed: {
+    timestamp: number
+  }
+  touchTapProcessed: {
+    x: number
+    y: number
+    timestamp: number
+  }
+  touchDoubleTapProcessed: {
+    x: number
+    y: number
+    timestamp: number
+  }
+  touchLongPressProcessed: {
+    x: number
+    y: number
+    timestamp: number
+  }
+  touchSwipeProcessed: {
+    direction: string
+    distance: number
+    timestamp: number
+  }
+  touchFlickProcessed: {
+    direction: string
+    velocity: number
+    timestamp: number
+  }
+  
+  // Performance events
+  performanceUpdate: {
+    fps: number
+    memoryUsage: number
+    timestamp: number
+  }
+  assetLoadProgress: {
+    assetId: string
+    progress: number
+    timestamp: number
+  }
+  garbageCollection: {
+    freedMemory: number
+    timestamp: number
+  }
+  browserAdaptation: {
+    adaptationType: string
+    timestamp: number
+  }
+  
+  // Level completion events
+  levelCompleted: {
+    levelId: string
+    questId: string
+    timestamp: number
+  }
+  
+  // Missing event types from GameLogicSystem
+  petInteraction: {
+    petId: string
+    interactionType: string
+    timestamp: number
+  }
+  
+  areaExplored: {
+    areaId: string
+    explorationValue: number
+    timestamp: number
+  }
+  
+  itemCollected: {
+    itemId: string
+    rarity: string
+    timestamp: number
+  }
+  
+  npcInteraction: {
+    npcId: string
+    interactionType: string
+    timestamp: number
+  }
+  
+  gameProgressUpdated: {
+    questId: string
+    objectiveId: string
+    progress: number
+    timestamp: number
+  }
+  
+  scoreUpdated: {
+    newScore: number
+    pointsEarned: number
+    reason: string
+    timestamp: number
+  }
+  
+  // Missing event types from CheckpointSystem
+  checkpointData: {
+    checkpoints: [string, any][]
+    timestamp: number
+  }
 }
 
 export type EventType = keyof GameEvents

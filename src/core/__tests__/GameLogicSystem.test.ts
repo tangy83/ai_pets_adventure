@@ -144,8 +144,9 @@ describe('GameLogicSystem', () => {
       
       expect(mockListener).toHaveBeenCalledWith({
         questId,
-        progress: 0,
-        score: expect.any(Number)
+        objectiveId: 'main',
+        player: expect.any(Object),
+        progress: 0
       })
     })
   })
@@ -366,11 +367,10 @@ describe('GameLogicSystem', () => {
       eventManager.emit('questStarted', { questId: 'test_quest' })
       
       expect(mockListener).toHaveBeenCalledWith({
-        action: 'quest_started',
-        points: expect.any(Number),
-        totalScore: expect.any(Number),
-        streak: expect.any(Number),
-        multiplier: expect.any(Number)
+        newScore: expect.any(Number),
+        pointsEarned: expect.any(Number),
+        reason: 'quest_started',
+        timestamp: expect.any(Number)
       })
     })
 
@@ -382,8 +382,7 @@ describe('GameLogicSystem', () => {
       
       expect(mockListener).toHaveBeenCalledWith({
         achievementId: 'first_quest',
-        achievement: expect.any(Object),
-        totalScore: expect.any(Number)
+        totalAchievements: expect.any(Number)
       })
     })
 
@@ -394,9 +393,10 @@ describe('GameLogicSystem', () => {
       eventManager.emit('playerLevelUp', { newLevel: 2 })
       
       expect(mockListener).toHaveBeenCalledWith({
-        type: 'level_up',
-        newLevel: 2,
-        score: expect.any(Number)
+        questId: 'level_up',
+        objectiveId: 'level_up',
+        progress: 2,
+        timestamp: expect.any(Number)
       })
     })
   })

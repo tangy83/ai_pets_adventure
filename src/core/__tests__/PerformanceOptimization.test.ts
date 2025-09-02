@@ -481,8 +481,8 @@ describe('Phase 2.3 Performance Optimization - Comprehensive Testing', () => {
       
       expect(mockCallback).toHaveBeenCalledWith(
         expect.objectContaining({
-          metrics: expect.any(Object),
-          frameCount: expect.any(Number),
+          fps: expect.any(Number),
+          memoryUsage: expect.any(Number),
           timestamp: expect.any(Number)
         })
       )
@@ -571,7 +571,7 @@ describe('Phase 2.3 Performance Optimization - Comprehensive Testing', () => {
       eventManager.on('garbageCollection', mockCallback)
       
       // Trigger memory warning
-      eventManager.emit('memoryWarning', { usage: 0.9 })
+      eventManager.emit('memory:warning', { usage: 0.9 })
       
       expect(mockCallback).toHaveBeenCalled()
     })
@@ -636,8 +636,8 @@ describe('Phase 2.3 Performance Optimization - Comprehensive Testing', () => {
       
       expect(mockCallback).toHaveBeenCalledWith(
         expect.objectContaining({
-          compatibility: expect.any(Object),
-          adaptedConfig: expect.any(Object)
+          adaptationType: expect.any(String),
+          timestamp: expect.any(Number)
         })
       )
     })

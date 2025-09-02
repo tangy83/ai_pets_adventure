@@ -365,7 +365,7 @@ export class QuestManager {
       }
     }
 
-    this.eventManager.emit('questProgressUpdated', { questId: quest.id, objectiveId: objectiveId, player: { id: playerId } })
+    this.eventManager.emit('questProgressUpdated', { questId: quest.id, objectiveId: objectiveId, player: { id: playerId }, progress: 100 })
     return true
   }
 
@@ -1149,8 +1149,17 @@ export class QuestManager {
         for (const questData of questProgress.activeQuests) {
           const quest = this.quests.get(questData.id)
           if (quest) {
-            quest.progress = questData.progress
-            quest.objectives = questData.objectives
+            // Handle progress restoration - create proper QuestProgress object
+            if (typeof questData.progress === 'number') {
+              quest.progress = this.createInitialProgress(quest.objectives)
+            } else if (questData.progress) {
+              quest.progress = questData.progress as QuestProgress
+            }
+            
+            // Handle objectives restoration
+            if (Array.isArray(questData.objectives)) {
+              quest.objectives = questData.objectives as unknown as QuestObjective[]
+            }
             // Handle optional properties gracefully
             if ('startTime' in questData) {
               (quest as any).startTime = questData.startTime

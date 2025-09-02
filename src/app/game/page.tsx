@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { GameComponent } from '../../ui/GameComponent'
-import { MultiModalAISystem } from '../../core/systems/MultiModalAISystem'
-import { PetAISystem } from '../../core/systems/PetAISystem'
-import { ClientSideAIProcessor } from '../../core/systems/ClientSideAIProcessor'
-import { EventManager } from '../../core/EventManager'
+import { GameComponent } from '@/ui/GameComponent'
+import { MultiModalAISystem } from '@/core/systems/MultiModalAISystem'
+import { PetAISystem } from '@/core/systems/PetAISystem'
+import { ClientSideAIProcessor } from '@/core/systems/ClientSideAIProcessor'
+import { EventManager } from '@/core/EventManager'
 
 export default function GamePage() {
   const [gameState, setGameState] = useState<'loading' | 'ready' | 'playing' | 'paused'>('loading')

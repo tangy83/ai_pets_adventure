@@ -263,12 +263,33 @@ export const GameComponent: React.FC<GameComponentProps> = ({
 
       // Set up player movement monitoring
       eventManager.on('playerMovement', (data) => {
-        if (data.isActive) {
-          setPlayerPosition(prev => ({
-            x: prev.x + (data.velocity.x * 0.016), // Approximate for 60fps
-            y: prev.y + (data.velocity.y * 0.016)
-          }))
+        // Update position based on direction (simplified movement)
+        const moveDistance = 5 // Fixed movement distance
+        let deltaX = 0
+        let deltaY = 0
+        
+        switch (data.direction) {
+          case 'up':
+            deltaY = -moveDistance
+            break
+          case 'down':
+            deltaY = moveDistance
+            break
+          case 'left':
+            deltaX = -moveDistance
+            break
+          case 'right':
+            deltaX = moveDistance
+            break
+          case 'none':
+          default:
+            return // No movement
         }
+        
+        setPlayerPosition(prev => ({
+          x: prev.x + deltaX,
+          y: prev.y + deltaY
+        }))
       })
 
       // Set up player position changes
@@ -376,7 +397,7 @@ export const GameComponent: React.FC<GameComponentProps> = ({
       })
 
       eventManager.on('accessibilityNavigationModeChange', (data) => {
-        setAccessibilityState(prev => ({
+        setAccessibilityState((prev: any) => ({
           ...prev,
           navigationMode: data.mode || prev.navigationMode
         }))

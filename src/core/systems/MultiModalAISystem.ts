@@ -207,21 +207,21 @@ export class MultiModalAISystem extends BaseSystem {
   private drawingTimeout?: NodeJS.Timeout
   
   // Text Processing
-  private textProcessor: TextProcessor
+  private textProcessor!: TextProcessor
   
   // Touch Gesture Recognition
-  private touchProcessor: TouchGestureProcessor
+  private touchProcessor!: TouchGestureProcessor
   
   // Camera Integration
   private cameraStream?: MediaStream
   private cameraVideo?: HTMLVideoElement
-  private arProcessor: ARProcessor
+  private arProcessor!: ARProcessor
   
   // Context Awareness
-  private contextAnalyzer: ContextAnalyzer
+  private contextAnalyzer!: ContextAnalyzer
   
   // Multi-Modal Fusion
-  private fusionEngine: MultiModalFusionEngine
+  private fusionEngine!: MultiModalFusionEngine
 
   constructor(eventManager: EventManager, config?: Partial<MultiModalAIConfig>) {
     super('multi-modal-ai', 90)
@@ -342,13 +342,15 @@ export class MultiModalAISystem extends BaseSystem {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     this.speechRecognition = new SpeechRecognition()
     
-    this.speechRecognition.continuous = this.config.voice.continuousListening
-    this.speechRecognition.interimResults = false
-    this.speechRecognition.lang = this.config.voice.language
-    
-    this.speechRecognition.onresult = this.handleVoiceRecognitionResult.bind(this)
-    this.speechRecognition.onerror = this.handleVoiceRecognitionError.bind(this)
-    this.speechRecognition.onend = this.handleVoiceRecognitionEnd.bind(this)
+    if (this.speechRecognition) {
+      this.speechRecognition.continuous = this.config.voice.continuousListening
+      this.speechRecognition.interimResults = false
+      this.speechRecognition.lang = this.config.voice.language
+      
+      this.speechRecognition.onresult = this.handleVoiceRecognitionResult.bind(this)
+      this.speechRecognition.onerror = this.handleVoiceRecognitionError.bind(this)
+      this.speechRecognition.onend = this.handleVoiceRecognitionEnd.bind(this)
+    }
     
     console.log('Voice Recognition initialized')
   }
@@ -852,6 +854,56 @@ export class MultiModalAISystem extends BaseSystem {
 
   public isCameraActive(): boolean {
     return !!this.cameraStream
+  }
+
+  /**
+   * Check if voice recognition is enabled
+   */
+  public isVoiceEnabled(): boolean {
+    return this.config.voice.enableVoiceCommands
+  }
+
+  /**
+   * Check if drawing recognition is enabled
+   */
+  public isDrawingEnabled(): boolean {
+    return this.config.drawing.enableDrawingRecognition
+  }
+
+  /**
+   * Check if text processing is enabled
+   */
+  public isTextEnabled(): boolean {
+    return this.config.text.enableNaturalLanguage
+  }
+
+  /**
+   * Check if touch gesture recognition is enabled
+   */
+  public isTouchEnabled(): boolean {
+    return this.config.touch.enableGestureRecognition
+  }
+
+  /**
+   * Recognize touch gesture from event
+   */
+  public recognizeTouchGesture(event: TouchEvent | any): any {
+    if (!this.config.touch.enableGestureRecognition) {
+      return null
+    }
+
+    // Basic gesture recognition logic
+    const gesture = {
+      type: event.type || 'unknown',
+      direction: 'unknown',
+      distance: 0,
+      duration: 0,
+      fingers: event.touches?.length || 1,
+      timestamp: event.timeStamp || Date.now()
+    }
+
+    this.eventManager.emit('multiModalAI:touch:gesture', gesture)
+    return gesture
   }
 
   public getConfig(): MultiModalAIConfig {
